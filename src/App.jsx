@@ -5,6 +5,7 @@ import { supabase } from "./supabase";
 import "./App.css";
 import pingpongTrainingLogo from "./assets/pingpong-training-logo.png";
 import heroTraining from "./assets/hero-training.png";
+import qrPingpongTraining from "./assets/QR_PINGPONG_TRAINING.png";
 import qrisBca from "./assets/qris-bca.png";
 
 
@@ -3029,9 +3030,33 @@ const formattedSchedules = await Promise.all(
 
 
       <footer>
-        <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,lineHeight:1.15}}>
-          <strong style={{margin:0}}>PINGPONG TRAINING</strong>
-          <span style={{margin:0}}>Table Tennis Training Center</span>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,lineHeight:1.15}}>
+          <button
+            type="button"
+            title="Klik QR untuk menyalin link PINGPONG TRAINING"
+            aria-label="Salin link PINGPONG TRAINING"
+            onClick={async () => {
+              const link = "https://pingpong-training.vercel.app";
+              try {
+                await navigator.clipboard.writeText(link);
+                alert("✓ Link berhasil disalin");
+              } catch {
+                window.prompt("Salin link PINGPONG TRAINING:", link);
+              }
+            }}
+            style={{border:0,background:"transparent",padding:0,cursor:"pointer",display:"flex",alignItems:"center"}}
+          >
+            <img
+              src={qrPingpongTraining}
+              alt="QR PINGPONG TRAINING"
+              style={{width:54,height:54,objectFit:"contain",borderRadius:6,background:"#fff",padding:2}}
+            />
+          </button>
+          <div style={{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:3}}>
+            <strong style={{margin:0}}>PINGPONG TRAINING</strong>
+            <span style={{margin:0}}>Table Tennis Training Center</span>
+            <span style={{fontSize:10,opacity:.8}}>Klik QR untuk salin link</span>
+          </div>
         </div>
       </footer>
 
