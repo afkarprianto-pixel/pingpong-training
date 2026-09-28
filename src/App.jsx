@@ -2207,13 +2207,13 @@ const formattedSchedules = await Promise.all(
               <h2 style={{margin:0,fontSize:20,color:"#111"}}>Syarat & Ketentuan (S&K)</h2>
               <button type="button" aria-label="Tutup" onClick={()=>setShowTerms(false)} style={{border:"1px solid #777",background:"rgba(255,255,255,.7)",color:"#111",width:30,height:30,borderRadius:9,fontSize:18,cursor:"pointer"}}>×</button>
             </div>
-            <ol style={{margin:"0 0 12px 20px",padding:0,fontSize:13.5,lineHeight:1.55,fontWeight:600}}>
-              <li style={{marginBottom:7}}>Peserta dibatasi maksimal 3 s.d. 4 orang dalam 1 grup.</li>
-              <li style={{marginBottom:7}}>Durasi latihan maksimal 2 jam.</li>
-              <li style={{marginBottom:7}}>Biaya latihan adalah total biaya pelatih + sewa tempat, dibagi anggota grup.</li>
-              <li style={{marginBottom:7}}>Peserta atau member bisa pindah hari, tetapi disesuaikan dengan jadwal yang ada.</li>
-              <li style={{marginBottom:7}}>Member melakukan pembayaran sebelum latihan dilaksanakan.</li>
-              <li style={{marginBottom:7}}>Pembayaran yang telah dilakukan, bukti pembayaran dikirim ke WhatsApp Pelatih.</li>
+            <ol style={{margin:"0 0 12px 22px",padding:0,fontSize:13.5,lineHeight:1.55,fontWeight:600,textAlign:"left"}}>
+              <li style={{marginBottom:7,paddingLeft:6,textAlign:"left"}}>Peserta dibatasi maksimal 3 s.d. 4 orang dalam 1 grup.</li>
+              <li style={{marginBottom:7,paddingLeft:6,textAlign:"left"}}>Durasi latihan maksimal 2 jam.</li>
+              <li style={{marginBottom:7,paddingLeft:6,textAlign:"left"}}>Biaya latihan adalah total biaya pelatih + sewa tempat, dibagi anggota grup.</li>
+              <li style={{marginBottom:7,paddingLeft:6,textAlign:"left"}}>Peserta atau member bisa pindah hari, tetapi disesuaikan dengan jadwal yang ada.</li>
+              <li style={{marginBottom:7,paddingLeft:6,textAlign:"left"}}>Member melakukan pembayaran sebelum latihan dilaksanakan.</li>
+              <li style={{marginBottom:7,paddingLeft:6,textAlign:"left"}}>Pembayaran yang telah dilakukan, bukti pembayaran dikirim ke WhatsApp Pelatih.</li>
             </ol>
             <p style={{margin:"10px 0 14px",fontSize:13.5,lineHeight:1.55,fontWeight:700}}>Demikian ketentuan Pelatihan di PINGPONG TRAINING. Semakin cepat daftar, Anda akan semakin cepat bisa.</p>
             <button type="button" onClick={()=>setShowTerms(false)} style={{width:"100%",border:0,borderRadius:10,padding:"10px 12px",background:"#123b52",color:"#fff",fontWeight:800,cursor:"pointer"}}>Tutup</button>
