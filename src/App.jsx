@@ -68,6 +68,11 @@ function App() {
   const [participantFilter, setParticipantFilter] = useState("Semua");
   const [memberSearch, setMemberSearch] = useState("");
   const [schedulePopup, setSchedulePopup] = useState(null);
+  const [schedulePopupParticipants, setSchedulePopupParticipants] = useState([]);
+  const [loadingSchedulePopup, setLoadingSchedulePopup] = useState(false);
+  const [participantPopup, setParticipantPopup] = useState(null);
+  const [participantEdit, setParticipantEdit] = useState({name:"",whatsapp:"",level:"",status:"",schedule_id:""});
+  const [savingParticipantEdit, setSavingParticipantEdit] = useState(false);
   const [paymentDrafts, setPaymentDrafts] = useState({});
   const [savingPaymentId, setSavingPaymentId] = useState(null);
   const [selectedScheduleId, setSelectedScheduleId] = useState(null);
@@ -321,7 +326,7 @@ function App() {
     setLoadingRegistrations(true);
     setRegistrationError("");
     const { data, error } = await supabase.from("registrations")
-      .select("id,schedule_id,name,whatsapp,level,status,payment_status,training_type,location_type,location_detail,paid_amount,invoice_amount")
+      .select("id,schedule_id,name,whatsapp,level,status,payment_status,training_type,location_type,location_detail,paid_amount,invoice_amount,registration_status")
       .order("id", { ascending: false });
     if (error) {
       setRegistrationError("Gagal mengambil peserta: " + error.message);
@@ -331,7 +336,10 @@ function App() {
   }
 
   function jumlahPesertaJadwal(scheduleId) {
-    return registrations.filter(r => String(r.schedule_id) === String(scheduleId)).length;
+    return registrations.filter(r =>
+      String(r.schedule_id) === String(scheduleId) &&
+      (!r.registration_status || r.registration_status === "Terdaftar")
+    ).length;
   }
 
   function tagihanPeserta(r) {
@@ -342,6 +350,123 @@ function App() {
     if (j.type !== "Private" && jumlah < 3) return null;
     const durasi = durasiJam(j.start_time, j.end_time);
     return Math.ceil((Number(j.coach_rate || 0) + Number(j.rental_rate_per_hour || 0) * durasi) / (j.type === "Private" ? 1 : jumlah));
+  }
+
+  async function bukaPesertaJadwal(schedule) {
+    setSchedulePopup(schedule);
+    setSchedulePopupParticipants([]);
+    setLoadingSchedulePopup(true);
+
+    const { data, error } = await supabase
+      .from("registrations")
+      .select("*")
+      .eq("schedule_id", schedule.id)
+      .order("id", { ascending: true });
+
+    setLoadingSchedulePopup(false);
+
+    if (error) {
+      console.error("Gagal mengambil peserta jadwal:", error);
+      alert("Gagal mengambil data peserta: " + error.message);
+      return;
+    }
+
+    setSchedulePopupParticipants((data || []).filter(r => !r.registration_status || r.registration_status === "Terdaftar"));
+  }
+
+  async function batalkanPesertaCoach(r) {
+    if (!isPelatih || !r) return;
+    const nama = r.name || "peserta";
+    if (!window.confirm(`Batalkan pendaftaran ${nama}? Slot jadwal akan tersedia kembali, tetapi riwayat peserta tetap tersimpan.`)) return;
+    const { error } = await supabase.from("registrations")
+      .update({ registration_status: "Dibatalkan Coach" }).eq("id", r.id);
+    if (error) { alert("Gagal membatalkan pendaftaran: " + error.message); return; }
+    setParticipantPopup(null);
+    setSchedulePopup(null);
+    await loadRegistrations();
+    await loadSchedules();
+    alert(`Pendaftaran ${nama} berhasil dibatalkan.`);
+  }
+
+  function bukaEditPeserta(r) {
+    setParticipantPopup(r);
+    setParticipantEdit({
+      name:r.name || "",
+      whatsapp:r.whatsapp || "",
+      level:r.level || "",
+      status:r.status || "",
+      schedule_id:String(r.schedule_id || "")
+    });
+  }
+
+  async function simpanEditPeserta() {
+    if (!participantPopup || savingParticipantEdit) return;
+    if (!participantEdit.name.trim() || !participantEdit.whatsapp.trim()) {
+      alert("Nama dan WhatsApp wajib diisi.");
+      return;
+    }
+    setSavingParticipantEdit(true);
+    const { error } = await supabase.from("registrations").update({
+      name:participantEdit.name.trim(),
+      whatsapp:participantEdit.whatsapp.trim(),
+      level:participantEdit.level,
+      status:participantEdit.status,
+      schedule_id:Number(participantEdit.schedule_id)
+    }).eq("id",participantPopup.id);
+    setSavingParticipantEdit(false);
+    if (error) { alert("Gagal menyimpan perubahan peserta: " + error.message); return; }
+    setParticipantPopup(null);
+    await loadRegistrations();
+    await loadSchedules();
+    alert("Data peserta berhasil diperbarui.");
+  }
+
+  function nomorWhatsAppIndonesia(value) {
+    let n = String(value || "").replace(/\D/g, "");
+    if (n.startsWith("0")) n = "62" + n.slice(1);
+    else if (n.startsWith("8")) n = "62" + n;
+    else if (!n.startsWith("62")) return "";
+    return /^628\d{7,12}$/.test(n) ? n : "";
+  }
+
+  function kirimTagihanWhatsApp(r) {
+    const tagihan = tagihanPeserta(r);
+    if (tagihan === null) {
+      alert("Tagihan belum tersedia. Untuk Group, tunggu minimal 3 peserta.");
+      return;
+    }
+
+    const nomor = nomorWhatsAppIndonesia(r.whatsapp);
+    if (!nomor) {
+      alert("Nomor WhatsApp peserta tidak valid. Periksa nomor pada Data Peserta.");
+      return;
+    }
+
+    const jadwal = schedules.find(s => String(s.id) === String(r.schedule_id));
+    if (!jadwal) {
+      alert("Jadwal peserta tidak ditemukan.");
+      return;
+    }
+
+    const jenis = r.training_type === "Private" ? "Private" : "Group";
+    const pesan = [
+      "🏓 *PINGPONG TRAINING*",
+      "",
+      `Halo ${r.name || "Member"}, pendaftaran latihan Anda sudah tercatat.`,
+      "",
+      `Jadwal: ${jadwal.day}, ${jadwal.time}`,
+      `Program: ${jenis}`,
+      `Total Tagihan: *${rupiah(tagihan)}*`,
+      "",
+      "Pembayaran:",
+      "BCA a.n. Teguh Prianto, SE",
+      "No. Rekening: 7740579198",
+      "",
+      "Setelah pembayaran, silakan kirim bukti pembayaran kepada Pelatih.",
+      "Terima kasih."
+    ].join("\\n");
+
+    window.open(`https://wa.me/${nomor}?text=${encodeURIComponent(pesan)}`, "_blank", "noopener,noreferrer");
   }
 
   async function simpanPembayaran(r) {
@@ -529,27 +654,27 @@ function App() {
 
     }
 
+// Ambil peserta aktif langsung dari registrations agar angka jadwal selalu sinkron.
+    const { data: activeRegistrationData, error: activeRegistrationError } = await supabase
+      .from("registrations")
+      .select("schedule_id,registration_status")
+      .eq("registration_status", "Terdaftar");
+
+    if (activeRegistrationError) {
+      console.error("Gagal mengambil jumlah peserta aktif:", activeRegistrationError);
+    }
+
+    const activeCountBySchedule = (activeRegistrationData || []).reduce((acc, row) => {
+      const key = String(row.schedule_id);
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {});
+
 const formattedSchedules = await Promise.all(
 
   (scheduleData || []).map(async (item) => {
 
-    const { data: registrationCount, error: countError } =
-
-      await supabase.rpc("get_registration_count", {
-
-        p_schedule_id: item.id,
-
-      });
-
-
-
-    if (countError) {
-
-      console.error("Gagal menghitung peserta:", countError);
-
-    }
-
-
+    const registrationCount = activeCountBySchedule[String(item.id)] || 0;
 
     return {
 
@@ -1007,6 +1132,24 @@ const formattedSchedules = await Promise.all(
         .admin-compact section { box-shadow:0 5px 16px rgba(0,43,64,.06); }
         .admin-compact table th { background:#063d56; }
         .admin-compact table td { line-height:1.2; }
+        .clickable-participant-row,
+        .clickable-schedule-row { cursor:pointer; }
+        .clickable-participant-row > td,
+        .clickable-schedule-row > td {
+          transition: background-color .16s ease, color .16s ease, box-shadow .16s ease !important;
+        }
+        .clickable-participant-row:hover > td {
+          background-color:#bfe9df !important;
+        }
+        .clickable-participant-row:hover > td:first-child {
+          box-shadow:inset 5px 0 0 #047857 !important;
+        }
+        .clickable-schedule-row:hover > td {
+          background-color:#c7e9f5 !important;
+        }
+        .clickable-schedule-row:hover > td:first-child {
+          box-shadow:inset 5px 0 0 #08799a !important;
+        }
       `}</style>
 
       {page === "admin" && (
@@ -1135,7 +1278,7 @@ const formattedSchedules = await Promise.all(
                         const draft=paymentDrafts[r.id]||{};
                         const status=draft.status??(["Belum Dibayar","DP","Lunas"].includes(r.payment_status)?r.payment_status:"Belum Dibayar");
                         const dibayar=draft.paid!==undefined?bacaRupiah(draft.paid):Number(r.paid_amount||0);
-                        return <tr key={r.id} style={{background:index%2===0?"#ffffff":"#f1f7f8"}}>
+                        return <tr key={r.id} className="clickable-participant-row" onClick={()=>bukaEditPeserta(r)} title="Klik untuk melihat / edit peserta" style={{background:index%2===0?"#ffffff":"#f1f7f8",cursor:"pointer"}}>
                           <td style={cell}>{index+1}</td>
                           <td style={{...cell,fontWeight:700}}>{r.name}</td>
                           <td style={cell}>{r.whatsapp}</td>
@@ -1145,11 +1288,33 @@ const formattedSchedules = await Promise.all(
                           <td style={cell}>{r.location_type||"-"}{r.location_detail?` — ${r.location_detail}`:""}</td>
                           <td style={cell}>{r.status||"-"}</td>
                           <td style={{...cell,whiteSpace:"nowrap"}}>{tagihan===null?"Menunggu 3 peserta":<>{rupiah(tagihan)}{Number(r.paid_amount||0)>tagihan&&<div style={{color:"#047857",fontWeight:700}}>Kelebihan: {rupiah(Number(r.paid_amount)-tagihan)}</div>}</>}</td>
-                          <td style={cell}><input aria-label={`Pembayaran ${r.name}`} inputMode="numeric" style={{width:130,padding:7}} value={draft.paid!==undefined?draft.paid:angkaRupiah(r.paid_amount||0)} onChange={e=>setPaymentDrafts(p=>({...p,[r.id]:{...p[r.id],paid:angkaRupiah(bacaRupiah(e.target.value))}}))} disabled={tagihan===null}/></td>
-                          <td style={cell}><select aria-label={`Status pembayaran ${r.name}`} style={{minWidth:130,padding:7}} value={["Belum Dibayar","DP","Lunas"].includes(status)?status:"Belum Dibayar"} onChange={e=>setPaymentDrafts(p=>({...p,[r.id]:{...p[r.id],status:e.target.value}}))} disabled={tagihan===null}>
+                          <td style={cell} onClick={e=>e.stopPropagation()}><input aria-label={`Pembayaran ${r.name}`} inputMode="numeric" style={{width:130,padding:7}} value={draft.paid!==undefined?draft.paid:angkaRupiah(r.paid_amount||0)} onChange={e=>setPaymentDrafts(p=>({...p,[r.id]:{...p[r.id],paid:angkaRupiah(bacaRupiah(e.target.value))}}))} disabled={tagihan===null}/></td>
+                          <td style={cell} onClick={e=>e.stopPropagation()}><select aria-label={`Status pembayaran ${r.name}`} style={{minWidth:130,padding:7}} value={["Belum Dibayar","DP","Lunas"].includes(status)?status:"Belum Dibayar"} onChange={e=>setPaymentDrafts(p=>({...p,[r.id]:{...p[r.id],status:e.target.value}}))} disabled={tagihan===null}>
                             <option>Belum Dibayar</option><option>DP</option><option>Lunas</option>
                           </select></td>
-                          <td style={cell}><button type="button" className="back-button" disabled={tagihan===null||savingPaymentId!==null} onClick={()=>simpanPembayaran(r)}>{savingPaymentId===r.id?"Menyimpan...":"Simpan"}</button></td>
+                          <td style={cell} onClick={e=>e.stopPropagation()}>
+                              <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
+                                <button type="button" className="back-button" disabled={tagihan===null||savingPaymentId!==null} onClick={()=>simpanPembayaran(r)}>{savingPaymentId===r.id?"Menyimpan...":"Simpan"}</button>
+                                <button
+                                  type="button"
+                                  disabled={tagihan===null}
+                                  onClick={()=>kirimTagihanWhatsApp(r)}
+                                  title={tagihan===null ? "Tagihan belum tersedia" : "Buka WhatsApp dengan pesan tagihan"}
+                                  style={{
+                                    padding:"8px 10px",
+                                    borderRadius:8,
+                                    border:"1px solid #128c5e",
+                                    background:tagihan===null?"#d8e0e3":"#16a66a",
+                                    color:tagihan===null?"#718087":"#fff",
+                                    fontWeight:900,
+                                    cursor:tagihan===null?"not-allowed":"pointer",
+                                    whiteSpace:"nowrap"
+                                  }}
+                                >
+                                  WhatsApp Tagihan
+                                </button>
+                              </div>
+                            </td>
                         </tr>;
                       })}
                     </tbody>
@@ -1164,24 +1329,33 @@ const formattedSchedules = await Promise.all(
               </section>
               <h3 style={{marginTop:12}}>Daftar Jadwal</h3>
               <div style={{overflowX:"auto",maxHeight:430,overflowY:"auto",border:"1px solid #dbe5ed",borderRadius:10,marginTop:6}}>
-                <table style={{width:"100%",minWidth:980,borderCollapse:"collapse",fontSize:13,textAlign:"left"}}>
+                <table style={{width:"100%",minWidth:1040,borderCollapse:"collapse",tableLayout:"fixed",fontSize:12.5,textAlign:"left"}}>
+                  <colgroup>
+                    <col style={{width:"52px"}} />
+                    <col style={{width:"95px"}} />
+                    <col style={{width:"135px"}} />
+                    <col style={{width:"82px"}} />
+                    <col style={{width:"88px"}} />
+                    <col style={{width:"125px"}} />
+                    <col style={{width:"120px"}} />
+                    <col style={{width:"115px"}} />
+                    <col style={{width:"228px"}} />
+                  </colgroup>
                   <thead style={{position:"sticky",top:0,background:"#0b3042",color:"#fff",zIndex:2}}>
                     <tr>{["No.","Hari","Waktu","Durasi","Jenis","Peserta","Pembayaran","Pendaftaran","Aksi"].map(h=>
-                      <th key={h} style={{padding:"12px 10px",whiteSpace:"nowrap",borderBottom:"1px solid #dbe5ed"}}>{h}</th>
+                      <th key={h} style={{padding:"10px 8px",whiteSpace:"nowrap",borderBottom:"1px solid #dbe5ed",textAlign:"left",boxSizing:"border-box"}}>{h}</th>
                     )}</tr>
                   </thead>
                   <tbody>
                     {schedules.map((item,i)=>{
-                      const cell={padding:"10px",borderBottom:"1px solid #e2e8f0",whiteSpace:"nowrap",verticalAlign:"middle"};
-                      const pesertaJadwal=registrations.filter(r=>String(r.schedule_id)===String(item.id));
+                      const cell={padding:"9px 8px",borderBottom:"1px solid #e2e8f0",whiteSpace:"nowrap",verticalAlign:"middle",textAlign:"left",boxSizing:"border-box",overflow:"hidden",textOverflow:"ellipsis"};
+                      const pesertaJadwal=registrations.filter(r=>String(r.schedule_id)===String(item.id) && (!r.registration_status || r.registration_status==="Terdaftar"));
                       const semuaLunas=pesertaJadwal.length>0 && pesertaJadwal.every(r=>r.payment_status==="Lunas");
                       const terbuka=selectedScheduleId===item.id;
                       return <React.Fragment key={item.id}>
                         <tr
-                          onClick={async ()=>{
-                            if (registrations.length===0) await loadRegistrations();
-                            setSchedulePopup(item);
-                          }}
+                          className="clickable-schedule-row"
+                          onClick={()=>bukaPesertaJadwal(item)}
                           style={{background:i%2===0?"#fff":"#f1f7f8",cursor:"pointer"}}
                           title="Klik untuk melihat peserta jadwal ini"
                         >
@@ -1190,7 +1364,11 @@ const formattedSchedules = await Promise.all(
                           <td style={cell}>{item.time}</td>
                           <td style={cell}>{durasiJam(item.start_time,item.end_time).toLocaleString("id-ID")} jam</td>
                           <td style={cell}>{item.type}</td>
-                          <td style={cell}>{item.registered}/{item.quota}</td>
+                          <td style={cell}>
+                            <button type="button" onClick={e=>{e.stopPropagation();bukaPesertaJadwal(item);}} style={{border:"1px solid #79a9bd",background:"#e8f6fb",color:"#073b55",borderRadius:8,padding:"6px 10px",fontWeight:800,cursor:"pointer"}}>
+                              {item.registered}/{item.quota} peserta
+                            </button>
+                          </td>
                           <td style={{...cell,fontWeight:700}}>{semuaLunas?"Lunas":"Belum Lunas"}</td>
                           <td style={cell}>{item.registrationClosed ? "Ditutup" : item.registered >= item.quota ? "Penuh" : item.activeRaw ? "Terbuka" : "Nonaktif"}</td>
                           <td style={cell} onClick={e=>e.stopPropagation()}>
@@ -1960,16 +2138,29 @@ const formattedSchedules = await Promise.all(
               <p style={{color:"#64748b"}}>Jadwal Grup dan Private yang tersedia.</p>
             </div>
             <div style={{overflowX:"auto",background:"#fff",borderRadius:16,boxShadow:"0 8px 24px rgba(20,55,75,.08)"}}>
-              <table style={{width:"100%",minWidth:680,borderCollapse:"collapse",fontSize:14}}>
+              <table style={{width:"100%",minWidth:680,borderCollapse:"collapse",tableLayout:"fixed",fontSize:14}}>
+                <colgroup>
+                  <col style={{width:"20%"}} />
+                  <col style={{width:"22%"}} />
+                  <col style={{width:"18%"}} />
+                  <col style={{width:"18%"}} />
+                  <col style={{width:"22%"}} />
+                </colgroup>
                 <thead style={{background:"#073b55",color:"#fff"}}>
-                  <tr>{["Hari","Waktu","Jenis","Peserta","Status"].map(h=><th key={h} style={{padding:13,textAlign:"left"}}>{h}</th>)}</tr>
+                  <tr>{["Hari","Waktu","Jenis","Peserta","Status"].map(h=><th key={h} style={{padding:"12px 13px",textAlign:"left",boxSizing:"border-box"}}>{h}</th>)}</tr>
                 </thead>
-                <tbody>{schedules.map((item,i)=><tr key={item.id} style={{background:i%2?"#f1f7f8":"#fff"}}>
-                  <td style={{padding:13,borderBottom:"1px solid #e2e8f0"}}>{item.day}</td>
-                  <td style={{padding:13,borderBottom:"1px solid #e2e8f0"}}>{item.time}</td>
-                  <td style={{padding:13,borderBottom:"1px solid #e2e8f0"}}>{item.type==="Private"?"Private":"Grup"}</td>
-                  <td style={{padding:13,borderBottom:"1px solid #e2e8f0"}}>{item.registered}/{item.quota}</td>
-                  <td style={{padding:13,borderBottom:"1px solid #e2e8f0",fontWeight:700}}>{item.available?"Tersedia":"Penuh / Ditutup"}</td>
+                <tbody>{schedules.map((item,i)=><tr
+                  key={item.id}
+                  className="clickable-schedule-row"
+                  onClick={()=>bukaPesertaJadwal(item)}
+                  title="Klik untuk melihat peserta"
+                  style={{background:i%2?"#f1f7f8":"#fff",cursor:"pointer"}}
+                >
+                  <td style={{padding:"12px 13px",borderBottom:"1px solid #e2e8f0",boxSizing:"border-box"}}>{item.day}</td>
+                  <td style={{padding:"12px 13px",borderBottom:"1px solid #e2e8f0",boxSizing:"border-box"}}>{item.time}</td>
+                  <td style={{padding:"12px 13px",borderBottom:"1px solid #e2e8f0",boxSizing:"border-box"}}>{item.type==="Private"?"Private":"Grup"}</td>
+                  <td style={{padding:"12px 13px",borderBottom:"1px solid #e2e8f0",boxSizing:"border-box",fontWeight:800}}>{item.registered}/{item.quota}</td>
+                  <td style={{padding:"12px 13px",borderBottom:"1px solid #e2e8f0",boxSizing:"border-box",fontWeight:700}}>{item.available?"Tersedia":"Penuh / Ditutup"}</td>
                 </tr>)}</tbody>
               </table>
             </div>
@@ -2364,18 +2555,63 @@ const formattedSchedules = await Promise.all(
         </div>
       )}
 
-      {schedulePopup && (()=>{
-        const peserta = registrations.filter(r=>String(r.schedule_id)===String(schedulePopup.id));
-        return <div onClick={()=>setSchedulePopup(null)} style={{position:"fixed",inset:0,zIndex:9998,background:"rgba(0,0,0,.55)",display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
-          <section onClick={e=>e.stopPropagation()} style={{width:"min(94vw,560px)",maxHeight:"82vh",overflowY:"auto",background:"#f3f5f6",color:"#102a3a",borderRadius:16,padding:16,boxShadow:"0 18px 55px rgba(0,0,0,.35)"}}>
-            <div style={{display:"flex",justifyContent:"space-between",gap:10,alignItems:"center"}}>
-              <h3 style={{margin:0}}>Peserta Jadwal</h3><button type="button" onClick={()=>setSchedulePopup(null)} style={{width:32,height:32,borderRadius:8,border:"1px solid #9aa",background:"#fff",fontSize:18}}>×</button>
+      {participantPopup && (
+        <div onClick={()=>setParticipantPopup(null)} style={{position:"fixed",inset:0,zIndex:9999,background:"rgba(0,0,0,.55)",display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+          <section onClick={e=>e.stopPropagation()} style={{width:"min(94vw,520px)",maxHeight:"86vh",overflowY:"auto",background:"#f3f5f6",color:"#102a3a",borderRadius:16,padding:16,boxShadow:"0 18px 55px rgba(0,0,0,.35)"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:10}}>
+              <h3 style={{margin:0}}>Data Peserta</h3>
+              <button type="button" onClick={()=>setParticipantPopup(null)} style={{width:32,height:32,borderRadius:8,border:"1px solid #9aa",background:"#fff",fontSize:18}}>×</button>
             </div>
-            <p style={{margin:"8px 0 12px"}}><strong>{schedulePopup.day}, {schedulePopup.time}</strong> • {schedulePopup.type} • {peserta.length}/{schedulePopup.quota} peserta</p>
-            {peserta.length===0 ? <p>Belum ada peserta pada jadwal ini.</p> : peserta.map((r,i)=><div key={r.id} style={{padding:"10px 0",borderBottom:"1px solid #ccd8de",textAlign:"left"}}>
-              <strong>{i+1}. {r.name}</strong><div style={{fontSize:13,marginTop:3}}>Level: {r.level||"-"} • Pembayaran: <strong>{r.payment_status==="Lunas"?"Lunas":"Belum Lunas"}</strong></div>
-            </div>)}
-            <button type="button" onClick={()=>setSchedulePopup(null)} style={{width:"100%",marginTop:14,border:0,borderRadius:9,padding:10,background:"#123b52",color:"#fff",fontWeight:800}}>Tutup</button>
+            <p style={{fontSize:12,color:"#64748b"}}>Edit data peserta lalu tekan Simpan Perubahan.</p>
+            <label style={{display:"block",fontWeight:800,fontSize:12,marginTop:9}}>Nama Peserta</label>
+            <input value={participantEdit.name} onChange={e=>setParticipantEdit(p=>({...p,name:e.target.value}))} style={{width:"100%",boxSizing:"border-box",padding:10,border:"1px solid #b8cbd5",borderRadius:8,marginTop:4}}/>
+            <label style={{display:"block",fontWeight:800,fontSize:12,marginTop:9}}>WhatsApp</label>
+            <input value={participantEdit.whatsapp} onChange={e=>setParticipantEdit(p=>({...p,whatsapp:e.target.value}))} style={{width:"100%",boxSizing:"border-box",padding:10,border:"1px solid #b8cbd5",borderRadius:8,marginTop:4}}/>
+            <label style={{display:"block",fontWeight:800,fontSize:12,marginTop:9}}>Level</label>
+            <select value={participantEdit.level} onChange={e=>setParticipantEdit(p=>({...p,level:e.target.value}))} style={{width:"100%",padding:10,border:"1px solid #b8cbd5",borderRadius:8,marginTop:4}}>
+              <option value="">Pilih Level</option><option>Pemula</option><option>Menengah</option><option>Lanjutan</option>
+            </select>
+            <label style={{display:"block",fontWeight:800,fontSize:12,marginTop:9}}>Status</label>
+            <input value={participantEdit.status} onChange={e=>setParticipantEdit(p=>({...p,status:e.target.value}))} style={{width:"100%",boxSizing:"border-box",padding:10,border:"1px solid #b8cbd5",borderRadius:8,marginTop:4}}/>
+            <label style={{display:"block",fontWeight:800,fontSize:12,marginTop:9}}>Jadwal</label>
+            <select value={participantEdit.schedule_id} onChange={e=>setParticipantEdit(p=>({...p,schedule_id:e.target.value}))} style={{width:"100%",padding:10,border:"1px solid #b8cbd5",borderRadius:8,marginTop:4}}>
+              {schedules.map(s=><option key={s.id} value={s.id}>{s.day}, {s.time} — {s.type}</option>)}
+            </select>
+            {isPelatih && (!participantPopup.registration_status || participantPopup.registration_status === "Terdaftar") && (
+              <button type="button" onClick={()=>batalkanPesertaCoach(participantPopup)} style={{width:"100%",marginTop:12,padding:9,borderRadius:9,border:"1px solid #b42318",background:"#fff1f0",color:"#b42318",fontWeight:900,cursor:"pointer"}}>
+                Batalkan Pendaftaran
+              </button>
+            )}
+            <div style={{display:"flex",gap:8,marginTop:10}}>
+              <button type="button" onClick={()=>setParticipantPopup(null)} style={{flex:1,padding:10,borderRadius:9,border:"1px solid #9fb2bd",background:"#fff",fontWeight:800}}>Tutup</button>
+              <button type="button" disabled={savingParticipantEdit} onClick={simpanEditPeserta} style={{flex:1,padding:10,borderRadius:9,border:0,background:"#059669",color:"#fff",fontWeight:900}}>{savingParticipantEdit?"Menyimpan...":"Simpan Perubahan"}</button>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {schedulePopup && (()=>{
+        const peserta = schedulePopupParticipants;
+        return <div onClick={()=>setSchedulePopup(null)} style={{position:"fixed",inset:0,zIndex:9998,background:"rgba(0,0,0,.55)",display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+          <section onClick={e=>e.stopPropagation()} style={{width:"min(92vw,440px)",maxHeight:"78vh",overflowY:"auto",background:"#f3f5f6",color:"#102a3a",borderRadius:13,padding:13,boxShadow:"0 18px 55px rgba(0,0,0,.35)",fontSize:12}}>
+            <div style={{display:"flex",justifyContent:"space-between",gap:10,alignItems:"center"}}>
+              <h3 style={{margin:0,fontSize:15,lineHeight:1.2}}>Peserta Jadwal</h3><button type="button" onClick={()=>setSchedulePopup(null)} style={{width:27,height:27,borderRadius:7,border:"1px solid #9aa",background:"#fff",fontSize:16,lineHeight:1}}>×</button>
+            </div>
+            <p style={{margin:"6px 0 8px",fontSize:11.5,lineHeight:1.35,textAlign:"left"}}><strong>{schedulePopup.day}, {schedulePopup.time}</strong> • {schedulePopup.type} • {peserta.length}/{schedulePopup.quota} peserta</p>
+            {loadingSchedulePopup ? (
+              <p style={{textAlign:"left",fontSize:11.5,margin:"8px 0"}}>Memuat peserta...</p>
+            ) : peserta.length===0 ? <p style={{textAlign:"left"}}>Belum ada peserta pada jadwal ini.</p> : (
+              <div style={{textAlign:"left",width:"100%"}}>
+                {peserta.map((r,i)=><div key={r.id} onClick={()=>{if(isPelatih){setSchedulePopup(null);bukaEditPeserta(r);}}} style={{display:"grid",gridTemplateColumns:"22px 1fr",gap:4,padding:"7px 3px",borderBottom:"1px solid #ccd8de",textAlign:"left",cursor:"pointer",fontSize:12}}>
+                  <strong style={{textAlign:"left"}}>{i+1}.</strong>
+                  <div style={{textAlign:"left"}}>
+                    <strong>{r.name}</strong>
+                    <div style={{fontSize:10.5,marginTop:2,textAlign:"left",color:"#536b78"}}>Level: {r.level||"-"} • Pembayaran: <strong>{r.payment_status==="Lunas"?"Lunas":"Belum Lunas"}</strong></div>
+                  </div>
+                </div>)}
+              </div>
+            )}
+            <button type="button" onClick={()=>setSchedulePopup(null)} style={{width:"100%",marginTop:10,border:0,borderRadius:8,padding:8,background:"#123b52",color:"#fff",fontWeight:800,fontSize:11.5}}>Tutup</button>
           </section>
         </div>;
       })()}
