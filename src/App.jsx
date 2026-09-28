@@ -67,6 +67,8 @@ function App() {
   const [registrationError, setRegistrationError] = useState("");
   const [participantFilter, setParticipantFilter] = useState("Semua");
   const [memberSearch, setMemberSearch] = useState("");
+  const [selectedParticipantIds, setSelectedParticipantIds] = useState([]);
+  const [bulkParticipantAction, setBulkParticipantAction] = useState(false);
   const [schedulePopup, setSchedulePopup] = useState(null);
   const [schedulePopupParticipants, setSchedulePopupParticipants] = useState([]);
   const [loadingSchedulePopup, setLoadingSchedulePopup] = useState(false);
@@ -386,6 +388,67 @@ function App() {
     await loadRegistrations();
     await loadSchedules();
     alert(`Pendaftaran ${nama} berhasil dibatalkan.`);
+  }
+
+  function togglePilihPeserta(id) {
+    setSelectedParticipantIds(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  }
+
+  async function batalkanPesertaTerpilih() {
+    if (!isPelatih || bulkParticipantAction || selectedParticipantIds.length === 0) return;
+    const aktifIds = registrations
+      .filter(r => selectedParticipantIds.includes(r.id) && (!r.registration_status || r.registration_status === "Terdaftar"))
+      .map(r => r.id);
+
+    if (aktifIds.length === 0) {
+      alert("Tidak ada peserta aktif yang dipilih.");
+      return;
+    }
+
+    if (!window.confirm(`Batalkan ${aktifIds.length} pendaftaran terpilih? Data tetap tersimpan sebagai riwayat dan slot jadwal akan tersedia kembali.`)) return;
+
+    setBulkParticipantAction(true);
+    const { error } = await supabase
+      .from("registrations")
+      .update({ registration_status: "Dibatalkan Coach" })
+      .in("id", aktifIds);
+    setBulkParticipantAction(false);
+
+    if (error) {
+      alert("Gagal membatalkan peserta terpilih: " + error.message);
+      return;
+    }
+
+    setSelectedParticipantIds([]);
+    await loadRegistrations();
+    await loadSchedules();
+    alert(`${aktifIds.length} pendaftaran berhasil dibatalkan.`);
+  }
+
+  async function hapusPesertaTerpilih() {
+    if (!isPelatih || bulkParticipantAction || selectedParticipantIds.length === 0) return;
+    const jumlah = selectedParticipantIds.length;
+    if (!window.confirm(`HAPUS PERMANEN ${jumlah} peserta terpilih?\n\nGunakan ini hanya untuk data salah / data uji coba. Data yang dihapus tidak dapat dikembalikan.`)) return;
+    if (!window.confirm(`Konfirmasi sekali lagi: benar-benar hapus permanen ${jumlah} data peserta?`)) return;
+
+    setBulkParticipantAction(true);
+    const { error } = await supabase
+      .from("registrations")
+      .delete()
+      .in("id", selectedParticipantIds);
+    setBulkParticipantAction(false);
+
+    if (error) {
+      alert("Gagal menghapus permanen. Pastikan policy DELETE Supabase untuk Coach sudah dibuat.\n\n" + error.message);
+      return;
+    }
+
+    setSelectedParticipantIds([]);
+    await loadRegistrations();
+    await loadSchedules();
+    alert(`${jumlah} data peserta berhasil dihapus permanen.`);
   }
 
   function bukaEditPeserta(r) {
@@ -1262,13 +1325,38 @@ const formattedSchedules = await Promise.all(
                     style={{width:"100%",maxWidth:420,padding:"9px 11px",border:"1px solid #a9c2ce",borderRadius:9,background:"#fff",color:"#102a3a"}}
                   />
                 </div>
+                <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap",marginBottom:10,padding:"9px 10px",background:"#f4f8fa",border:"1px solid #d5e2e8",borderRadius:9}}>
+                  <label style={{display:"flex",alignItems:"center",gap:6,fontWeight:800,cursor:"pointer"}}>
+                    <input
+                      type="checkbox"
+                      checked={(() => {
+                        const visible = registrations.filter(r=>(participantFilter==="Semua" || r.training_type===participantFilter) && (!memberSearch.trim() || `${r.name||""} ${r.whatsapp||""}`.toLowerCase().includes(memberSearch.trim().toLowerCase())));
+                        return visible.length > 0 && visible.every(r=>selectedParticipantIds.includes(r.id));
+                      })()}
+                      onChange={e=>{
+                        const visibleIds = registrations.filter(r=>(participantFilter==="Semua" || r.training_type===participantFilter) && (!memberSearch.trim() || `${r.name||""} ${r.whatsapp||""}`.toLowerCase().includes(memberSearch.trim().toLowerCase()))).map(r=>r.id);
+                        setSelectedParticipantIds(prev => e.target.checked ? Array.from(new Set([...prev,...visibleIds])) : prev.filter(id=>!visibleIds.includes(id)));
+                      }}
+                    />
+                    Pilih Semua
+                  </label>
+                  <span style={{fontSize:12,fontWeight:800,color:"#475569"}}>{selectedParticipantIds.length} dipilih</span>
+                  <button type="button" disabled={!selectedParticipantIds.length || bulkParticipantAction} onClick={batalkanPesertaTerpilih}
+                    style={{padding:"8px 10px",border:0,borderRadius:8,background:selectedParticipantIds.length?"#d97706":"#cbd5e1",color:"#fff",fontWeight:900,cursor:selectedParticipantIds.length?"pointer":"not-allowed"}}>
+                    {bulkParticipantAction ? "Memproses..." : "Batalkan Terpilih"}
+                  </button>
+                  <button type="button" disabled={!selectedParticipantIds.length || bulkParticipantAction} onClick={hapusPesertaTerpilih}
+                    style={{padding:"8px 10px",border:0,borderRadius:8,background:selectedParticipantIds.length?"#b91c1c":"#cbd5e1",color:"#fff",fontWeight:900,cursor:selectedParticipantIds.length?"pointer":"not-allowed"}}>
+                    Hapus Permanen Terpilih
+                  </button>
+                </div>
                 {registrationError && <p role="alert" style={{color:"#b91c1c"}}>{registrationError}</p>}
                 {!loadingRegistrations && !registrationError && registrations.length===0 &&
                   <p>Klik "Muat / Refresh Peserta" untuk menampilkan pendaftar.</p>}
                 <div style={{overflowX:"auto",maxHeight:430,overflowY:"auto",border:"1px solid #dbe5ed",borderRadius:10}}>
                   <table style={{width:"100%",minWidth:1480,borderCollapse:"collapse",fontSize:13,textAlign:"left"}}>
                     <thead style={{position:"sticky",top:0,background:"#0b3042",color:"white",zIndex:1}}>
-                      <tr>{["No.","Nama Peserta","WhatsApp","Jenis","Jadwal","Level","Lokasi","Status","Tagihan","Diterima (Rp)","Status Bayar","Aksi"].map(h=><th key={h} style={{padding:"11px 10px",whiteSpace:"nowrap",borderBottom:"1px solid #cbd5e1"}}>{h}</th>)}</tr>
+                      <tr>{["Pilih","No.","Nama Peserta","WhatsApp","Jenis","Jadwal","Level","Lokasi","Status","Tagihan","Diterima (Rp)","Status Bayar","Aksi"].map(h=><th key={h} style={{padding:"11px 10px",whiteSpace:"nowrap",borderBottom:"1px solid #cbd5e1"}}>{h}</th>)}</tr>
                     </thead>
                     <tbody>
                       {registrations.filter(r=>(participantFilter==="Semua" || r.training_type===participantFilter) && (!memberSearch.trim() || `${r.name||""} ${r.whatsapp||""}`.toLowerCase().includes(memberSearch.trim().toLowerCase()))).map((r,index)=>{
@@ -1279,6 +1367,9 @@ const formattedSchedules = await Promise.all(
                         const status=draft.status??(["Belum Dibayar","DP","Lunas"].includes(r.payment_status)?r.payment_status:"Belum Dibayar");
                         const dibayar=draft.paid!==undefined?bacaRupiah(draft.paid):Number(r.paid_amount||0);
                         return <tr key={r.id} className="clickable-participant-row" onClick={()=>bukaEditPeserta(r)} title="Klik untuk melihat / edit peserta" style={{background:index%2===0?"#ffffff":"#f1f7f8",cursor:"pointer"}}>
+                          <td style={{...cell,textAlign:"center"}} onClick={e=>e.stopPropagation()}>
+                            <input type="checkbox" aria-label={`Pilih ${r.name}`} checked={selectedParticipantIds.includes(r.id)} onChange={()=>togglePilihPeserta(r.id)} />
+                          </td>
                           <td style={cell}>{index+1}</td>
                           <td style={{...cell,fontWeight:700}}>{r.name}</td>
                           <td style={cell}>{r.whatsapp}</td>
