@@ -3030,7 +3030,7 @@ const formattedSchedules = await Promise.all(
 
 
       <footer>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,lineHeight:1.15}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,lineHeight:1.15,transform:"translateY(-18px)"}}>
           <button
             type="button"
             title="Klik QR untuk menyalin link PINGPONG TRAINING"
