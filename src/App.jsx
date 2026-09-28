@@ -54,6 +54,8 @@ function App() {
   const [loadingRegistrations, setLoadingRegistrations] = useState(false);
   const [registrationError, setRegistrationError] = useState("");
   const [participantFilter, setParticipantFilter] = useState("Semua");
+  const [memberSearch, setMemberSearch] = useState("");
+  const [schedulePopup, setSchedulePopup] = useState(null);
   const [paymentDrafts, setPaymentDrafts] = useState({});
   const [savingPaymentId, setSavingPaymentId] = useState(null);
   const [selectedScheduleId, setSelectedScheduleId] = useState(null);
@@ -484,6 +486,7 @@ const formattedSchedules = await Promise.all(
       activeRaw: Boolean(item.is_active),
       isActive: item.is_active && !item.registration_closed,
       registrationClosed: Boolean(item.registration_closed),
+      available: Boolean(item.is_active) && !Boolean(item.registration_closed) && Number(registrationCount || 0) < Number(item.quota || (item.type === "Private" ? 1 : 4)),
 
     };
 
@@ -1011,6 +1014,15 @@ const formattedSchedules = await Promise.all(
                     </button>
                   ))}
                 </div>
+                <div style={{marginBottom:10}}>
+                  <input
+                    type="search"
+                    placeholder="🔍 Cari member: nama atau WhatsApp..."
+                    value={memberSearch}
+                    onChange={e=>setMemberSearch(e.target.value)}
+                    style={{width:"100%",maxWidth:420,padding:"9px 11px",border:"1px solid #a9c2ce",borderRadius:9,background:"#fff",color:"#102a3a"}}
+                  />
+                </div>
                 {registrationError && <p role="alert" style={{color:"#b91c1c"}}>{registrationError}</p>}
                 {!loadingRegistrations && !registrationError && registrations.length===0 &&
                   <p>Klik "Muat / Refresh Peserta" untuk menampilkan pendaftar.</p>}
@@ -1020,7 +1032,7 @@ const formattedSchedules = await Promise.all(
                       <tr>{["No.","Nama Peserta","WhatsApp","Jenis","Jadwal","Level","Lokasi","Status","Tagihan","Diterima (Rp)","Status Bayar","Aksi"].map(h=><th key={h} style={{padding:"11px 10px",whiteSpace:"nowrap",borderBottom:"1px solid #cbd5e1"}}>{h}</th>)}</tr>
                     </thead>
                     <tbody>
-                      {registrations.filter(r=>participantFilter==="Semua" || r.training_type===participantFilter).map((r,index)=>{
+                      {registrations.filter(r=>(participantFilter==="Semua" || r.training_type===participantFilter) && (!memberSearch.trim() || `${r.name||""} ${r.whatsapp||""}`.toLowerCase().includes(memberSearch.trim().toLowerCase()))).map((r,index)=>{
                         const jadwal=schedules.find(s=>s.id===r.schedule_id);
                         const cell={padding:"10px",borderBottom:"1px solid #e2e8f0",verticalAlign:"top"};
                         const tagihan=tagihanPeserta(r);
@@ -1071,8 +1083,8 @@ const formattedSchedules = await Promise.all(
                       return <React.Fragment key={item.id}>
                         <tr
                           onClick={async ()=>{
-                            setSelectedScheduleId(terbuka?null:item.id);
-                            if(!terbuka && registrations.length===0) await loadRegistrations();
+                            if (registrations.length===0) await loadRegistrations();
+                            setSchedulePopup(item);
                           }}
                           style={{background:i%2===0?"#fff":"#f1f7f8",cursor:"pointer"}}
                           title="Klik untuk melihat peserta jadwal ini"
@@ -1084,7 +1096,7 @@ const formattedSchedules = await Promise.all(
                           <td style={cell}>{item.type}</td>
                           <td style={cell}>{item.registered}/{item.quota}</td>
                           <td style={{...cell,fontWeight:700}}>{semuaLunas?"Lunas":"Belum Lunas"}</td>
-                          <td style={cell}>{item.registrationClosed?"Ditutup":"Terbuka"}</td>
+                          <td style={cell}>{item.registrationClosed ? "Ditutup" : item.registered >= item.quota ? "Penuh" : item.activeRaw ? "Terbuka" : "Nonaktif"}</td>
                           <td style={cell} onClick={e=>e.stopPropagation()}>
                             <div style={{display:"flex",gap:7,alignItems:"center"}}>
                               <button type="button" className="back-button" onClick={()=>editSchedule(item)}>Edit</button>
@@ -1095,27 +1107,14 @@ const formattedSchedules = await Promise.all(
                             </div>
                           </td>
                         </tr>
-                        {terbuka && <tr>
-                          <td colSpan={9} style={{padding:0,background:"#edf7f2",borderBottom:"1px solid #cbd5e1"}}>
-                            <div style={{padding:"12px 18px"}}>
-                              <strong>Peserta — {item.day}, {item.time}</strong>
-                              {pesertaJadwal.length===0
-                                ? <p style={{margin:"8px 0 0",color:"#64748b"}}>Belum ada peserta pada jadwal ini.</p>
-                                : <div style={{marginTop:8}}>
-                                    {pesertaJadwal.map(r=><div key={r.id} style={{padding:"7px 0",borderBottom:"1px solid #d7e5df"}}>
-                                      <strong>{r.name}</strong> &nbsp;|&nbsp; {r.level||"-"} &nbsp;|&nbsp; <strong>{r.payment_status==="Lunas"?"Lunas":"Belum Lunas"}</strong>
-                                    </div>)}
-                                  </div>}
-                            </div>
-                          </td>
-                        </tr>}
+
                       </React.Fragment>;
                     })}
                     {schedules.length===0 && <tr><td colSpan={9} style={{padding:20,textAlign:"center"}}>Belum ada jadwal.</td></tr>}
                   </tbody>
                 </table>
               </div>
-              <p style={{fontSize:12,color:"#64748b"}}>Klik baris jadwal untuk melihat Nama Peserta | Level | Lunas / Belum Lunas. Nominal pembayaran tidak ditampilkan di Daftar Jadwal.</p>
+              <p style={{fontSize:12,color:"#64748b"}}>Klik baris jadwal untuk membuka popup peserta: Nama | Level | Lunas / Belum Lunas. Nominal pembayaran tidak ditampilkan di Daftar Jadwal.</p>
 
           </>}
 
@@ -2200,6 +2199,22 @@ const formattedSchedules = await Promise.all(
         </nav>
       )}
 
+      {schedulePopup && (()=>{
+        const peserta = registrations.filter(r=>String(r.schedule_id)===String(schedulePopup.id));
+        return <div onClick={()=>setSchedulePopup(null)} style={{position:"fixed",inset:0,zIndex:9998,background:"rgba(0,0,0,.55)",display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+          <section onClick={e=>e.stopPropagation()} style={{width:"min(94vw,560px)",maxHeight:"82vh",overflowY:"auto",background:"#f3f5f6",color:"#102a3a",borderRadius:16,padding:16,boxShadow:"0 18px 55px rgba(0,0,0,.35)"}}>
+            <div style={{display:"flex",justifyContent:"space-between",gap:10,alignItems:"center"}}>
+              <h3 style={{margin:0}}>Peserta Jadwal</h3><button type="button" onClick={()=>setSchedulePopup(null)} style={{width:32,height:32,borderRadius:8,border:"1px solid #9aa",background:"#fff",fontSize:18}}>×</button>
+            </div>
+            <p style={{margin:"8px 0 12px"}}><strong>{schedulePopup.day}, {schedulePopup.time}</strong> • {schedulePopup.type} • {peserta.length}/{schedulePopup.quota} peserta</p>
+            {peserta.length===0 ? <p>Belum ada peserta pada jadwal ini.</p> : peserta.map((r,i)=><div key={r.id} style={{padding:"10px 0",borderBottom:"1px solid #ccd8de",textAlign:"left"}}>
+              <strong>{i+1}. {r.name}</strong><div style={{fontSize:13,marginTop:3}}>Level: {r.level||"-"} • Pembayaran: <strong>{r.payment_status==="Lunas"?"Lunas":"Belum Lunas"}</strong></div>
+            </div>)}
+            <button type="button" onClick={()=>setSchedulePopup(null)} style={{width:"100%",marginTop:14,border:0,borderRadius:9,padding:10,background:"#123b52",color:"#fff",fontWeight:800}}>Tutup</button>
+          </section>
+        </div>;
+      })()}
+
       {showTerms && (
         <div onClick={()=>setShowTerms(false)} style={{position:"fixed",inset:0,zIndex:9999,background:"rgba(0,0,0,.55)",display:"flex",alignItems:"center",justifyContent:"center",padding:18}}>
           <section onClick={e=>e.stopPropagation()} style={{width:"min(92vw,520px)",maxHeight:"82vh",overflowY:"auto",background:"linear-gradient(145deg,#f4f4f4 0%,#c9c9c9 52%,#eeeeee 100%)",color:"#111",border:"1px solid #9a9a9a",borderRadius:18,padding:"18px 18px 16px",boxShadow:"0 18px 55px rgba(0,0,0,.38)"}}>
@@ -2207,14 +2222,18 @@ const formattedSchedules = await Promise.all(
               <h2 style={{margin:0,fontSize:20,color:"#111"}}>Syarat & Ketentuan (S&K)</h2>
               <button type="button" aria-label="Tutup" onClick={()=>setShowTerms(false)} style={{border:"1px solid #777",background:"rgba(255,255,255,.7)",color:"#111",width:30,height:30,borderRadius:9,fontSize:18,cursor:"pointer"}}>×</button>
             </div>
-            <ol style={{margin:"0 0 12px 22px",padding:0,fontSize:13.5,lineHeight:1.55,fontWeight:600,textAlign:"left"}}>
-              <li style={{marginBottom:7,paddingLeft:6,textAlign:"left"}}>Peserta dibatasi maksimal 3 s.d. 4 orang dalam 1 grup.</li>
-              <li style={{marginBottom:7,paddingLeft:6,textAlign:"left"}}>Durasi latihan maksimal 2 jam.</li>
-              <li style={{marginBottom:7,paddingLeft:6,textAlign:"left"}}>Biaya latihan adalah total biaya pelatih + sewa tempat, dibagi anggota grup.</li>
-              <li style={{marginBottom:7,paddingLeft:6,textAlign:"left"}}>Peserta atau member bisa pindah hari, tetapi disesuaikan dengan jadwal yang ada.</li>
-              <li style={{marginBottom:7,paddingLeft:6,textAlign:"left"}}>Member melakukan pembayaran sebelum latihan dilaksanakan.</li>
-              <li style={{marginBottom:7,paddingLeft:6,textAlign:"left"}}>Pembayaran yang telah dilakukan, bukti pembayaran dikirim ke WhatsApp Pelatih.</li>
-            </ol>
+            <div style={{fontSize:"clamp(13px,3.7vw,14px)",lineHeight:1.5,fontWeight:600,textAlign:"left",marginBottom:12}}>
+              {[
+                "Peserta dibatasi maksimal 3 s.d. 4 orang dalam 1 grup.",
+                "Durasi latihan maksimal 2 jam.",
+                "Biaya latihan adalah total biaya pelatih + sewa tempat, dibagi anggota grup.",
+                "Peserta atau member bisa pindah hari, tetapi disesuaikan dengan jadwal yang ada.",
+                "Member melakukan pembayaran sebelum latihan dilaksanakan.",
+                "Pembayaran yang telah dilakukan, bukti pembayaran dikirim ke WhatsApp Pelatih."
+              ].map((teks,i)=><div key={i} style={{display:"grid",gridTemplateColumns:"26px 1fr",gap:5,alignItems:"start",marginBottom:8}}>
+                <span>{i+1}.</span><span style={{textAlign:"left"}}>{teks}</span>
+              </div>)}
+            </div>
             <p style={{margin:"10px 0 14px",fontSize:13.5,lineHeight:1.55,fontWeight:700}}>Demikian ketentuan Pelatihan di PINGPONG TRAINING. Semakin cepat daftar, Anda akan semakin cepat bisa.</p>
             <button type="button" onClick={()=>setShowTerms(false)} style={{width:"100%",border:0,borderRadius:10,padding:"10px 12px",background:"#123b52",color:"#fff",fontWeight:800,cursor:"pointer"}}>Tutup</button>
           </section>
