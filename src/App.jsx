@@ -43,6 +43,7 @@ function App() {
   const [loginError, setLoginError] = useState("");
 
   const [loginBusy, setLoginBusy] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
 
   const [editId, setEditId] = useState(null);
 
@@ -2191,12 +2192,33 @@ const formattedSchedules = await Promise.all(
       {["home","pendaftaran","jadwal","pembayaran","program","progress","video"].includes(page) && (
         <nav style={{position:"sticky",bottom:0,zIndex:20,background:"#003a61",color:"#fff",display:"grid",gridTemplateColumns:"repeat(5,1fr)",padding:"4px 2px",boxShadow:"0 -4px 18px rgba(0,0,0,.15)"}}>
           {[
-            ["home","⌂","Home"],["progress","📈","Progress"],["video","▶️","Video"],["pembayaran","💳","Pembayaran"],["program","🏓","Program"]
-          ].map(([key,ic,label])=><button key={key} type="button" onClick={()=>setPage(key)}
+            ["home","⌂","Home"],["progress","📈","Progress"],["video","▶️","Video"],["sk","📋","S&K"],["program","🏓","Program"]
+          ].map(([key,ic,label])=><button key={key} type="button" onClick={()=>key === "sk" ? setShowTerms(true) : setPage(key)}
             style={{border:0,background:"transparent",color:page===key?"#24b6ff":"#fff",padding:"4px 1px",fontSize:10,cursor:"pointer"}}>
             <div style={{fontSize:17,lineHeight:1.1}}>{ic}</div><div>{label}</div>
           </button>)}
         </nav>
+      )}
+
+      {showTerms && (
+        <div onClick={()=>setShowTerms(false)} style={{position:"fixed",inset:0,zIndex:9999,background:"rgba(0,0,0,.55)",display:"flex",alignItems:"center",justifyContent:"center",padding:18}}>
+          <section onClick={e=>e.stopPropagation()} style={{width:"min(92vw,520px)",maxHeight:"82vh",overflowY:"auto",background:"linear-gradient(145deg,#f4f4f4 0%,#c9c9c9 52%,#eeeeee 100%)",color:"#111",border:"1px solid #9a9a9a",borderRadius:18,padding:"18px 18px 16px",boxShadow:"0 18px 55px rgba(0,0,0,.38)"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,marginBottom:10}}>
+              <h2 style={{margin:0,fontSize:20,color:"#111"}}>Syarat & Ketentuan (S&K)</h2>
+              <button type="button" aria-label="Tutup" onClick={()=>setShowTerms(false)} style={{border:"1px solid #777",background:"rgba(255,255,255,.7)",color:"#111",width:30,height:30,borderRadius:9,fontSize:18,cursor:"pointer"}}>×</button>
+            </div>
+            <ol style={{margin:"0 0 12px 20px",padding:0,fontSize:13.5,lineHeight:1.55,fontWeight:600}}>
+              <li style={{marginBottom:7}}>Peserta dibatasi maksimal 3 s.d. 4 orang dalam 1 grup.</li>
+              <li style={{marginBottom:7}}>Durasi latihan maksimal 2 jam.</li>
+              <li style={{marginBottom:7}}>Biaya latihan adalah total biaya pelatih + sewa tempat, dibagi anggota grup.</li>
+              <li style={{marginBottom:7}}>Peserta atau member bisa pindah hari, tetapi disesuaikan dengan jadwal yang ada.</li>
+              <li style={{marginBottom:7}}>Member melakukan pembayaran sebelum latihan dilaksanakan.</li>
+              <li style={{marginBottom:7}}>Pembayaran yang telah dilakukan, bukti pembayaran dikirim ke WhatsApp Pelatih.</li>
+            </ol>
+            <p style={{margin:"10px 0 14px",fontSize:13.5,lineHeight:1.55,fontWeight:700}}>Demikian ketentuan Pelatihan di PINGPONG TRAINING. Semakin cepat daftar, Anda akan semakin cepat bisa.</p>
+            <button type="button" onClick={()=>setShowTerms(false)} style={{width:"100%",border:0,borderRadius:10,padding:"10px 12px",background:"#123b52",color:"#fff",fontWeight:800,cursor:"pointer"}}>Tutup</button>
+          </section>
+        </div>
       )}
 
       {page === "register" &&
@@ -3029,8 +3051,8 @@ const formattedSchedules = await Promise.all(
 
 
 
-      <footer>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,lineHeight:1.15,transform:"translateY(-18px)"}}>
+      <footer style={{padding:"8px 12px 10px",minHeight:"auto",height:"auto"}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,lineHeight:1.15}}>
           <button
             type="button"
             title="Klik QR untuk menyalin link PINGPONG TRAINING"
