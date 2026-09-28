@@ -1941,7 +1941,7 @@ const formattedSchedules = await Promise.all(
                 filteredSchedules.map(item=><div className="schedule-card" key={item.id}>
                   <div className="schedule-top"><span className="day">{item.day}</span><span className="time">{item.time}</span></div>
                   <div className="coach">{item.type==="Private"?"PRIVATE":"GRUP"} • {item.registered}/{item.quota} peserta</div>
-                  <button className="choose-btn" disabled={!item.available} onClick={()=>selectSchedule(item)}>
+                  <button className="choose-btn" disabled={!item.available} onClick={()=>chooseSchedule(item)}>
                     {item.available?"Pilih & Daftar":"Penuh / Ditutup"}
                   </button>
                 </div>)}
