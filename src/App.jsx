@@ -44,6 +44,12 @@ function App() {
 
   const [loginBusy, setLoginBusy] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
+  const [page, setPage] = useState("home");
+  const [publicChats, setPublicChats] = useState([]);
+  const [chatName, setChatName] = useState(() => localStorage.getItem("pingtrn_chat_name") || "");
+  const [chatMessage, setChatMessage] = useState("");
+  const [loadingChat, setLoadingChat] = useState(false);
+  const [sendingChat, setSendingChat] = useState(false);
 
   const [editId, setEditId] = useState(null);
 
@@ -103,6 +109,43 @@ function App() {
   }, [isPelatih]);
 
 
+
+  async function loadPublicChat() {
+    setLoadingChat(true);
+    const { data, error } = await supabase.from("public_chat")
+      .select("id,sender_name,message,sender_type,created_at")
+      .order("created_at", { ascending: true })
+      .limit(100);
+    if (!error) setPublicChats(data || []);
+    else console.error("Gagal mengambil Chat Public:", error);
+    setLoadingChat(false);
+  }
+
+  async function sendPublicChat(e) {
+    e.preventDefault();
+    const nama = (isPelatih ? "Pelatih" : chatName).trim();
+    const pesan = chatMessage.trim();
+    if (!nama) { alert("Isi nama terlebih dahulu."); return; }
+    if (!pesan || sendingChat) return;
+    setSendingChat(true);
+    if (!isPelatih) localStorage.setItem("pingtrn_chat_name", nama);
+    const { error } = await supabase.from("public_chat").insert({
+      sender_name: nama,
+      message: pesan,
+      sender_type: isPelatih ? "pelatih" : "member"
+    });
+    setSendingChat(false);
+    if (error) { alert("Pesan gagal dikirim: " + error.message); return; }
+    setChatMessage("");
+    await loadPublicChat();
+  }
+
+  useEffect(() => {
+    if (page !== "chat") return;
+    loadPublicChat();
+    const timer = setInterval(loadPublicChat, 5000);
+    return () => clearInterval(timer);
+  }, [page]);
 
   async function loadProgress() {
     if (!isPelatih) return;
@@ -343,7 +386,7 @@ function App() {
 
   const [selectedDay, setSelectedDay] = useState("Semua");
 
-  const [page, setPage] = useState("home");
+
 
   const [selectedSchedule, setSelectedSchedule] = useState(null);
 
@@ -2188,13 +2231,52 @@ const formattedSchedules = await Promise.all(
         </main>
       )}
 
-      {["home","pendaftaran","jadwal","pembayaran","program","progress","video"].includes(page) && (
-        <nav style={{position:"sticky",bottom:0,zIndex:20,background:"#003a61",color:"#fff",display:"grid",gridTemplateColumns:"repeat(5,1fr)",padding:"4px 2px",boxShadow:"0 -4px 18px rgba(0,0,0,.15)"}}>
+      {page === "chat" && (
+        <main style={{background:"linear-gradient(180deg,#dbe8ed,#eef4f6,#d4e4ea)",minHeight:"75vh",padding:"14px 10px 22px"}}>
+          <div style={{maxWidth:720,margin:"0 auto"}}>
+            <button className="back-button" onClick={()=>setPage("home")}>← Home</button>
+            <div style={{textAlign:"center",margin:"7px 0 12px"}}>
+              <div style={{fontSize:29}}>💬</div>
+              <h2 style={{margin:"2px 0",color:"#073b55"}}>Chat Public</h2>
+              <p style={{fontSize:12,color:"#607d8b",margin:0}}>Ruang komunikasi member dan pelatih PINGPONG TRAINING.</p>
+            </div>
+
+            <section style={{background:"#f8fbfc",border:"1px solid #b9d0da",borderRadius:15,overflow:"hidden",boxShadow:"0 7px 20px rgba(20,55,75,.10)"}}>
+              <div style={{height:"min(54vh,470px)",overflowY:"auto",padding:12,background:"linear-gradient(180deg,#edf5f7,#dfecef)"}}>
+                {loadingChat && publicChats.length===0 ? <div style={{textAlign:"center",padding:24,color:"#607d8b"}}>⏳ Memuat chat...</div> :
+                 publicChats.length===0 ? <div style={{textAlign:"center",padding:30,color:"#607d8b"}}>Belum ada pesan. Jadilah yang pertama menyapa. 👋</div> :
+                 publicChats.map(c=>{
+                   const pelatih=c.sender_type==="pelatih";
+                   const waktu=c.created_at ? new Date(c.created_at).toLocaleString("id-ID",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"}) : "";
+                   return <div key={c.id} style={{marginBottom:9,display:"flex",justifyContent:pelatih?"flex-end":"flex-start"}}>
+                     <div style={{maxWidth:"84%",background:pelatih?"#d9f7df":"#fff",border:"1px solid #c3d6dc",borderRadius:12,padding:"8px 10px",boxShadow:"0 2px 7px rgba(0,0,0,.05)"}}>
+                       <div style={{fontSize:11,fontWeight:900,color:pelatih?"#087b45":"#075a7a"}}>{c.sender_name}{pelatih?" • Pelatih":""}</div>
+                       <div style={{fontSize:14,color:"#102a3a",lineHeight:1.4,whiteSpace:"pre-wrap",overflowWrap:"anywhere",textAlign:"left"}}>{c.message}</div>
+                       <div style={{fontSize:9,color:"#78909c",marginTop:3,textAlign:"right"}}>{waktu}</div>
+                     </div>
+                   </div>;
+                 })}
+              </div>
+              <form onSubmit={sendPublicChat} style={{padding:10,background:"#fff",borderTop:"1px solid #c7d8de"}}>
+                {!isPelatih && <input value={chatName} onChange={e=>setChatName(e.target.value)} placeholder="Nama Anda" maxLength={40} style={{width:"100%",boxSizing:"border-box",padding:"9px 10px",border:"1px solid #b7cbd3",borderRadius:9,marginBottom:7}} />}
+                {isPelatih && <div style={{fontSize:11,fontWeight:800,color:"#087b45",marginBottom:6}}>Mengirim sebagai: Pelatih</div>}
+                <div style={{display:"flex",gap:7}}>
+                  <input value={chatMessage} onChange={e=>setChatMessage(e.target.value)} placeholder="Tulis pesan..." maxLength={500} style={{flex:1,minWidth:0,padding:"10px",border:"1px solid #b7cbd3",borderRadius:10}} />
+                  <button type="submit" disabled={sendingChat || !chatMessage.trim()} style={{border:0,borderRadius:10,padding:"9px 14px",background:"#087b72",color:"#fff",fontWeight:900,cursor:"pointer"}}>{sendingChat?"...":"Kirim"}</button>
+                </div>
+              </form>
+            </section>
+          </div>
+        </main>
+      )}
+
+      {["home","pendaftaran","jadwal","pembayaran","program","progress","video","chat"].includes(page) && (
+        <nav style={{position:"sticky",bottom:0,zIndex:20,background:"#003a61",color:"#fff",display:"grid",gridTemplateColumns:"repeat(6,1fr)",padding:"4px 2px",boxShadow:"0 -4px 18px rgba(0,0,0,.15)"}}>
           {[
-            ["home","⌂","Home"],["progress","📈","Progress"],["video","▶️","Video"],["sk","📋","S&K"],["program","🏓","Program"]
+            ["home","⌂","Home"],["progress","📈","Progress"],["video","▶️","Video"],["sk","📋","S&K"],["program","🏓","Program"],["chat","💬","Chat Public"]
           ].map(([key,ic,label])=><button key={key} type="button" onClick={()=>key === "sk" ? setShowTerms(true) : setPage(key)}
             style={{border:0,background:"transparent",color:page===key?"#24b6ff":"#fff",padding:"4px 1px",fontSize:10,cursor:"pointer"}}>
-            <div style={{fontSize:17,lineHeight:1.1}}>{ic}</div><div>{label}</div>
+            <div style={{fontSize:key === "home" ? 24 : 20,lineHeight:1.1}}>{ic}</div><div>{label}</div>
           </button>)}
         </nav>
       )}

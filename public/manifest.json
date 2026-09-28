@@ -1,0 +1,17 @@
+{
+  "name": "PINGPONG TRAINING",
+  "short_name": "PingTrn",
+  "description": "Table Tennis Training Center",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#061a3a",
+  "theme_color": "#061a3a",
+  "icons": [
+    {
+      "src": "/pingtrn-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
