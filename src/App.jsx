@@ -7,6 +7,7 @@ import pingpongTrainingLogo from "./assets/pingpong-training-logo.png";
 import heroTraining from "./assets/hero-training.png";
 import qrPingpongTraining from "./assets/QR_PINGPONG_TRAINING.png";
 import qrisBca from "./assets/qris-bca.png";
+import skIcon from "./assets/sk-icon.png";
 
 
 
@@ -50,6 +51,11 @@ function App() {
   const [chatMessage, setChatMessage] = useState("");
   const [loadingChat, setLoadingChat] = useState(false);
   const [sendingChat, setSendingChat] = useState(false);
+  const [editingChatId, setEditingChatId] = useState(null);
+  const [editingChatText, setEditingChatText] = useState("");
+  const [installPrompt, setInstallPrompt] = useState(null);
+  const [showInstall, setShowInstall] = useState(false);
+  const [lastReadChatId, setLastReadChatId] = useState(() => Number(localStorage.getItem("pingtrn_last_read_chat_id") || 0));
 
   const [editId, setEditId] = useState(null);
 
@@ -141,11 +147,58 @@ function App() {
   }
 
   useEffect(() => {
-    if (page !== "chat") return;
     loadPublicChat();
     const timer = setInterval(loadPublicChat, 5000);
     return () => clearInterval(timer);
-  }, [page]);
+  }, []);
+
+  useEffect(() => {
+    if (page !== "chat" || publicChats.length === 0) return;
+    const newest = Math.max(...publicChats.map(c => Number(c.id) || 0));
+    setLastReadChatId(newest);
+    localStorage.setItem("pingtrn_last_read_chat_id", String(newest));
+  }, [page, publicChats]);
+
+  useEffect(() => {
+    const standalone = window.matchMedia?.("(display-mode: standalone)")?.matches || window.navigator.standalone === true;
+    const handler = (e) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+      if (!standalone && localStorage.getItem("pingtrn_install_dismissed") !== "1") setShowInstall(true);
+    };
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+
+  async function installPingTrn() {
+    if (!installPrompt) return;
+    await installPrompt.prompt();
+    const choice = await installPrompt.userChoice;
+    if (choice?.outcome === "accepted") setShowInstall(false);
+    setInstallPrompt(null);
+  }
+
+  function dismissInstall() {
+    localStorage.setItem("pingtrn_install_dismissed", "1");
+    setShowInstall(false);
+  }
+
+  async function saveEditedChat(id) {
+    const message = editingChatText.trim();
+    if (!message) return;
+    const { error } = await supabase.from("public_chat").update({ message }).eq("id", id);
+    if (error) { alert("Pesan gagal diedit: " + error.message); return; }
+    setEditingChatId(null); setEditingChatText(""); await loadPublicChat();
+  }
+
+  async function deletePublicChat(id) {
+    if (!window.confirm("Hapus pesan ini?")) return;
+    const { error } = await supabase.from("public_chat").delete().eq("id", id);
+    if (error) { alert("Pesan gagal dihapus: " + error.message); return; }
+    await loadPublicChat();
+  }
+
+  const unreadChatCount = publicChats.filter(c => Number(c.id) > lastReadChatId).length;
 
   async function loadProgress() {
     if (!isPelatih) return;
@@ -2251,8 +2304,20 @@ const formattedSchedules = await Promise.all(
                    return <div key={c.id} style={{marginBottom:9,display:"flex",justifyContent:pelatih?"flex-end":"flex-start"}}>
                      <div style={{maxWidth:"84%",background:pelatih?"#d9f7df":"#fff",border:"1px solid #c3d6dc",borderRadius:12,padding:"8px 10px",boxShadow:"0 2px 7px rgba(0,0,0,.05)"}}>
                        <div style={{fontSize:11,fontWeight:900,color:pelatih?"#087b45":"#075a7a"}}>{c.sender_name}{pelatih?" • Pelatih":""}</div>
-                       <div style={{fontSize:14,color:"#102a3a",lineHeight:1.4,whiteSpace:"pre-wrap",overflowWrap:"anywhere",textAlign:"left"}}>{c.message}</div>
-                       <div style={{fontSize:9,color:"#78909c",marginTop:3,textAlign:"right"}}>{waktu}</div>
+                       {editingChatId===c.id ? <div style={{marginTop:5}}>
+                         <textarea value={editingChatText} onChange={e=>setEditingChatText(e.target.value)} maxLength={500} style={{width:"100%",boxSizing:"border-box",minHeight:64,padding:7,border:"1px solid #9fb8c2",borderRadius:8,resize:"vertical"}} />
+                         <div style={{display:"flex",gap:5,justifyContent:"flex-end",marginTop:4}}>
+                           <button type="button" onClick={()=>{setEditingChatId(null);setEditingChatText("");}} style={{border:"1px solid #9fb8c2",borderRadius:7,padding:"4px 8px",background:"#fff"}}>Batal</button>
+                           <button type="button" onClick={()=>saveEditedChat(c.id)} style={{border:0,borderRadius:7,padding:"4px 8px",background:"#087b72",color:"#fff",fontWeight:800}}>Simpan</button>
+                         </div>
+                       </div> : <div style={{fontSize:14,color:"#102a3a",lineHeight:1.4,whiteSpace:"pre-wrap",overflowWrap:"anywhere",textAlign:"left"}}>{c.message}</div>}
+                       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,marginTop:4}}>
+                         <div style={{display:"flex",gap:5}}>
+                           {(isPelatih || c.sender_name===chatName) && <button type="button" onClick={()=>{setEditingChatId(c.id);setEditingChatText(c.message);}} style={{border:0,background:"transparent",fontSize:10,color:"#386273",padding:0,cursor:"pointer"}}>✏️ Edit</button>}
+                           {(isPelatih || c.sender_name===chatName) && <button type="button" onClick={()=>deletePublicChat(c.id)} style={{border:0,background:"transparent",fontSize:10,color:"#b42318",padding:0,cursor:"pointer"}}>🗑️ Hapus</button>}
+                         </div>
+                         <div style={{fontSize:9,color:"#78909c",textAlign:"right"}}>{waktu}</div>
+                       </div>
                      </div>
                    </div>;
                  })}
@@ -2273,12 +2338,30 @@ const formattedSchedules = await Promise.all(
       {["home","pendaftaran","jadwal","pembayaran","program","progress","video","chat"].includes(page) && (
         <nav style={{position:"sticky",bottom:0,zIndex:20,background:"#003a61",color:"#fff",display:"grid",gridTemplateColumns:"repeat(6,1fr)",padding:"4px 2px",boxShadow:"0 -4px 18px rgba(0,0,0,.15)"}}>
           {[
-            ["home","⌂","Home"],["progress","📈","Progress"],["video","▶️","Video"],["sk","📋","S&K"],["program","🏓","Program"],["chat","💬","Chat Public"]
+            ["home","⌂","Home"],["progress","📈","Progress"],["video","▶️","Video"],["sk","S&K","S&K"],["program","🏓","Program"],["chat","💬","Chat Public"]
           ].map(([key,ic,label])=><button key={key} type="button" onClick={()=>key === "sk" ? setShowTerms(true) : setPage(key)}
-            style={{border:0,background:"transparent",color:page===key?"#24b6ff":"#fff",padding:"4px 1px",fontSize:10,cursor:"pointer"}}>
-            <div style={{fontSize:key === "home" ? 24 : 20,lineHeight:1.1}}>{ic}</div><div>{label}</div>
+            style={{border:0,background:"transparent",color:page===key?"#24b6ff":"#fff",padding:"4px 1px",fontSize:10,cursor:"pointer",position:"relative"}}>
+            {key === "sk" ? (
+              <img src={skIcon} alt="" aria-hidden="true" style={{display:"block",width:24,height:24,objectFit:"cover",borderRadius:5,margin:"0 auto"}} />
+            ) : (
+              <div style={{fontSize:key === "home" ? 24 : 20,lineHeight:1.1}}>{ic}</div>
+            )}
+            {key==="chat" && unreadChatCount>0 && <span style={{position:"absolute",top:0,right:"18%",minWidth:16,height:16,padding:"0 4px",borderRadius:9,background:"#ef4444",color:"#fff",fontSize:9,fontWeight:900,lineHeight:"16px",boxSizing:"border-box"}}>{unreadChatCount>99?"99+":unreadChatCount}</span>}
+            <div>{label}</div>
           </button>)}
         </nav>
+      )}
+
+
+      {showInstall && installPrompt && (
+        <div style={{position:"fixed",inset:0,zIndex:10001,background:"rgba(0,0,0,.48)",display:"flex",alignItems:"center",justifyContent:"center",padding:18}}>
+          <section style={{width:"min(92vw,420px)",background:"linear-gradient(145deg,#eef4f6,#cbd9df)",color:"#102a3a",borderRadius:18,padding:18,boxShadow:"0 18px 55px rgba(0,0,0,.35)",textAlign:"center"}}>
+            <div style={{fontSize:40}}>📲</div><h2 style={{margin:"5px 0"}}>Install PingTrn</h2>
+            <p style={{fontSize:14,lineHeight:1.5}}>Pasang PINGPONG TRAINING di HP agar bisa dibuka langsung dari layar utama.</p>
+            <button type="button" onClick={installPingTrn} style={{width:"100%",border:0,borderRadius:10,padding:11,background:"#087b72",color:"#fff",fontWeight:900}}>INSTALL PINGTRN</button>
+            <button type="button" onClick={dismissInstall} style={{marginTop:8,border:0,background:"transparent",color:"#365b6b",fontWeight:800}}>NANTI</button>
+          </section>
+        </div>
       )}
 
       {schedulePopup && (()=>{
