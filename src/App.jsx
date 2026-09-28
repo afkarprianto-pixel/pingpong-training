@@ -1214,55 +1214,9 @@ const formattedSchedules = await Promise.all(
           box-shadow:inset 5px 0 0 #08799a !important;
         }
 
-        /* ===== Mobile finishing: visual only, tidak mengubah fungsi ===== */
-        @media (max-width: 600px) {
-          html, body, #root {
-            margin: 0 !important;
-            min-height: 100% !important;
-            background: #061a3a !important;
-          }
-
-          .topbar {
-            padding-top: 10px !important;
-            padding-bottom: 10px !important;
-          }
-
-          .hero {
-            min-height: auto !important;
-          }
-
-          .bottom-nav {
-            padding-left: 5px !important;
-            padding-right: 5px !important;
-          }
-
-          .bottom-nav button {
-            min-width: 0 !important;
-            padding-left: 2px !important;
-            padding-right: 2px !important;
-            font-size: 12px !important;
-          }
-
-          .bottom-nav button > div:first-child {
-            transform: scale(.92);
-            transform-origin: center bottom;
-          }
-
-          footer {
-            margin-bottom: 0 !important;
-            padding-top: 12px !important;
-            padding-bottom: 12px !important;
-          }
-
-          footer img {
-            max-width: 82px !important;
-            height: auto !important;
-          }
-
-          main, .app-shell, .page-shell {
-            margin-bottom: 0 !important;
-            padding-bottom: 0 !important;
-          }
+        /* Hanya warna area kosong di bawah aplikasi; layout tidak digeser */
+        html, body, #root {
+          background-color: #061a3a;
         }
       `}</style>
 
