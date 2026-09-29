@@ -1227,30 +1227,16 @@ const formattedSchedules = await Promise.all(
           .quick-actions > div { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 8px !important; }
           .quick-actions button { min-height: 66px; padding: 7px 5px !important; }
           .app > main:not(.registration-page):not(.success-page) { padding-left: 10px !important; padding-right: 10px !important; }
-          .home-contact-footer {
-            padding-top: 14px !important;
-            padding-bottom: 7px !important;
-          }
-          .app .home-contact-footer .home-contact-icon {
-            width: 40px !important;
-            height: 40px !important;
-            min-width: 40px !important;
-            min-height: 40px !important;
-            font-size: 20px !important;
-          }
-          .bottom-nav {
-            padding-top: 4px !important;
+          footer { padding-top: 10px !important; padding-bottom: 12px !important; }
+
+          /* KHUSUS footer navy paling bawah yang berisi QR + 3 baris teks */
+          footer.qr-footer-final {
+            min-height: 0 !important;
+            height: auto !important;
+            padding-top: 3px !important;
             padding-bottom: 3px !important;
-          }
-          .qr-footer {
-            padding-top: 6px !important;
-            padding-bottom: 4px !important;
-          }
-          .app .qr-footer .footer-qr {
-            width: 38px !important;
-            height: 38px !important;
-            max-width: 38px !important;
-            max-height: 38px !important;
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
           }
         }
       `}</style>
@@ -2209,7 +2195,7 @@ const formattedSchedules = await Promise.all(
               <p style={{marginBottom:0}}>Teknik Dasar • Spin & Topspin • Blok & Defense • Latihan Taktik • Private • Grup 3–4 Orang</p>
             </div>
           </section>
-          <footer className="home-contact-footer" style={{background:"linear-gradient(180deg,#08608d 0%,#07547e 48%,#043e63 100%)",color:"#fff",padding:"14px 16px 8px",textAlign:"center",marginTop:-1}}>
+          <footer style={{background:"linear-gradient(180deg,#08608d 0%,#07547e 48%,#043e63 100%)",color:"#fff",padding:"8px 16px 18px",textAlign:"center",marginTop:-1}}>
             <div style={{maxWidth:1050,margin:"0 auto",display:"flex",justifyContent:"center",alignItems:"center",gap:10,flexWrap:"nowrap"}}>
               <div className="home-contact-icon" aria-hidden="true" style={{width:54,height:54,borderRadius:"50%",background:"#22c55e",display:"flex",alignItems:"center",justifyContent:"center",fontSize:29,boxShadow:"0 5px 14px rgba(0,0,0,.18)"}}>☎</div>
               <div style={{textAlign:"left",lineHeight:1.15}}>
@@ -3602,7 +3588,7 @@ const formattedSchedules = await Promise.all(
 
 
 
-      <footer className="qr-footer" style={{padding:"7px 12px 5px",minHeight:"auto",height:"auto",background:"#061a3a",margin:0}}>
+      <footer className="qr-footer-final" style={{padding:"4px 12px 3px",minHeight:0,height:"auto",background:"#061a3a",margin:0}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,lineHeight:1.15}}>
           <button
             type="button"
