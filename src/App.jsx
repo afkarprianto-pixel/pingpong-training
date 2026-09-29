@@ -1239,6 +1239,23 @@ const formattedSchedules = await Promise.all(
           /* HOME final contact/nav */
           body, #root, .app { background:#061a3a !important; }
 
+          /* =========================================================
+             HOME - KHUSUS HP
+             Desktop tidak berubah.
+             Teks hero dinaikkan, foto/background diturunkan.
+          ========================================================= */
+          @media (max-width: 600px) {
+            .hero {
+              /* Nilai lebih besar = framing foto terlihat lebih ke bawah */
+              background-position: center 76% !important;
+            }
+
+            /* Naikkan isi teks hero tanpa menggeser foto */
+            .hero > div {
+              transform: translateY(-22px);
+            }
+          }
+
           /* HOME mobile terbaru: teks atas naik, foto turun, menu bawah lebih dekat WhatsApp */
           .hero {
             background-position: center 66% !important;
