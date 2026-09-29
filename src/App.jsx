@@ -2260,7 +2260,7 @@ const formattedSchedules = await Promise.all(
         /* KHUSUS HP: geser foto ke kiri agar pelatih terlihat lebih utuh */
         @media (max-width:600px){
           .app.home-app .hero{
-            background-position:57% center !important;
+            background-position:68% center !important;
           }
         }
 
