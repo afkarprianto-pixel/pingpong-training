@@ -627,6 +627,16 @@ function App() {
 
 
   const [selectedDay, setSelectedDay] = useState("Semua");
+  const [registrationProgram, setRegistrationProgram] = useState("Group");
+  const [privateRequests, setPrivateRequests] = useState([]);
+  const [loadingPrivateRequests, setLoadingPrivateRequests] = useState(false);
+  const [privateName, setPrivateName] = useState("");
+  const [privateMessage, setPrivateMessage] = useState("");
+  const [privateThreadId, setPrivateThreadId] = useState(null);
+  const [privateThreadMessages, setPrivateThreadMessages] = useState([]);
+  const [privateReplyText, setPrivateReplyText] = useState("");
+  const [privateRequestBusy, setPrivateRequestBusy] = useState(false);
+
 
 
 
@@ -797,6 +807,116 @@ const formattedSchedules = await Promise.all(
   }, []);
 
 
+
+  async function loadPrivateRequests() {
+    if (!isPelatih) return;
+    setLoadingPrivateRequests(true);
+    const { data, error } = await supabase
+      .from("private_requests")
+      .select("*")
+      .order("created_at", { ascending:false });
+    setLoadingPrivateRequests(false);
+    if (error) { console.error("Gagal mengambil pengajuan Private:", error); return; }
+    setPrivateRequests(data || []);
+  }
+
+  useEffect(() => {
+    if (isPelatih) loadPrivateRequests();
+  }, [isPelatih]);
+
+  async function loadPrivateThread(requestId) {
+    if (!requestId) return;
+    const { data, error } = await supabase
+      .from("private_request_messages")
+      .select("*")
+      .eq("request_id", requestId)
+      .order("created_at", { ascending:true });
+    if (error) { console.error("Gagal membuka percakapan Private:", error); return; }
+    setPrivateThreadMessages(data || []);
+  }
+
+  useEffect(() => {
+    if (!privateThreadId) return;
+    loadPrivateThread(privateThreadId);
+    const timer = setInterval(() => loadPrivateThread(privateThreadId), 4000);
+    return () => clearInterval(timer);
+  }, [privateThreadId]);
+
+  async function mulaiPengajuanPrivate(e) {
+    e.preventDefault();
+    if (privateRequestBusy) return;
+    if (!privateName.trim() || !privateMessage.trim()) {
+      alert("Isi nama dan permintaan Private terlebih dahulu.");
+      return;
+    }
+    setPrivateRequestBusy(true);
+    const { data:req, error } = await supabase.from("private_requests").insert({
+      name:privateName.trim(),
+      whatsapp:"Belum diberikan",
+      member_note:privateMessage.trim(),
+      status:"Menunggu Tanggapan"
+    }).select("id").single();
+    if (error) {
+      setPrivateRequestBusy(false);
+      alert("Pengajuan Private gagal dikirim: " + error.message);
+      return;
+    }
+    const { error:msgError } = await supabase.from("private_request_messages").insert({
+      request_id:req.id, sender_type:"member", sender_name:privateName.trim(), message:privateMessage.trim()
+    });
+    setPrivateRequestBusy(false);
+    if (msgError) { alert("Pengajuan dibuat, tetapi pesan gagal disimpan: "+msgError.message); return; }
+    localStorage.setItem("pingtrn_private_request_id", String(req.id));
+    setPrivateThreadId(req.id);
+    setPrivateMessage("");
+    await loadPrivateThread(req.id);
+  }
+
+  async function bukaPercakapanPrivateSaya() {
+    const saved = Number(localStorage.getItem("pingtrn_private_request_id") || 0);
+    if (!saved) { alert("Belum ada pengajuan Private pada perangkat ini."); return; }
+    setPrivateThreadId(saved);
+    await loadPrivateThread(saved);
+  }
+
+  async function kirimPesanPrivate(senderType, senderName) {
+    const message = privateReplyText.trim();
+    if (!privateThreadId || !message) return;
+    setPrivateRequestBusy(true);
+    const { error } = await supabase.from("private_request_messages").insert({
+      request_id:privateThreadId, sender_type:senderType, sender_name:senderName, message
+    });
+    setPrivateRequestBusy(false);
+    if (error) { alert("Pesan gagal dikirim: "+error.message); return; }
+    setPrivateReplyText("");
+    await loadPrivateThread(privateThreadId);
+    if (isPelatih) await loadPrivateRequests();
+  }
+
+  async function coachSiapkanJadwalPrivate(r) {
+    const hari = window.prompt("Hari jadwal Private:", "Sabtu");
+    if (!hari) return;
+    const mulai = window.prompt("Jam mulai:", "18:00");
+    if (!mulai) return;
+    const selesai = window.prompt("Jam selesai:", "20:00");
+    if (!selesai) return;
+    setScheduleForm({
+      ...emptySchedule,
+      day:hari,
+      start_time:mulai,
+      end_time:selesai,
+      type:"Private",
+      quota:1,
+      min_participants:1,
+      coach_rate:350000,
+      rental_rate_per_hour:50000,
+      is_active:true
+    });
+    setEditId(null);
+    await supabase.from("private_requests").update({status:"Siap Dibuat Jadwal"}).eq("id",r.id);
+    window.scrollTo(0,0);
+    alert("Data jadwal Private sudah dimasukkan ke form Tambah Jadwal. Periksa lalu klik Simpan Jadwal.");
+  }
 
   // =========================================================
 
@@ -1450,6 +1570,40 @@ const formattedSchedules = await Promise.all(
                 <p style={{fontSize:12,color:"#64748b"}}>Tagihan Grup muncul saat 3 peserta dan dihitung ulang otomatis jika menjadi 4. Pembayaran yang sudah diterima tidak hilang; kelebihan pembayaran ditampilkan di kolom tagihan.</p>
                 <p style={{fontSize:12,color:"#64748b"}}>Pada layar kecil, geser tabel ke samping untuk melihat seluruh kolom.</p>
               </section>
+              <section style={{marginTop:16,background:"#fff",border:"1px solid #d7e3e8",borderRadius:12,padding:12}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+                  <h3 style={{margin:0}}>💬 Pengajuan Private</h3>
+                  <button type="button" className="back-button" onClick={loadPrivateRequests}>Refresh</button>
+                </div>
+                <p style={{fontSize:12,color:"#64748b"}}>Percakapan ini hanya untuk calon member Private dan Coach, bukan Chat Publik.</p>
+                {loadingPrivateRequests ? <p>Memuat...</p> : privateRequests.length===0 ? <p style={{fontSize:12}}>Belum ada pengajuan Private.</p> :
+                  <div style={{display:"grid",gap:8}}>
+                    {privateRequests.map(r=><div key={r.id} style={{border:"1px solid #dbe5ed",borderRadius:10,padding:10}}>
+                      <div style={{display:"flex",justifyContent:"space-between",gap:8,alignItems:"center"}}>
+                        <strong>{r.name}</strong><span style={{fontSize:11,color:"#087b72",fontWeight:800}}>{r.status}</span>
+                      </div>
+                      <div style={{fontSize:12,color:"#526b78",marginTop:4}}>{r.member_note || "Pengajuan Private"}</div>
+                      <div style={{display:"flex",gap:7,flexWrap:"wrap",marginTop:8}}>
+                        <button type="button" className="back-button" onClick={async()=>{setPrivateThreadId(r.id);await loadPrivateThread(r.id);}}>Buka & Balas</button>
+                        <button type="button" className="back-button" onClick={()=>coachSiapkanJadwalPrivate(r)}>Buat Jadwal Private</button>
+                      </div>
+                    </div>)}
+                  </div>}
+                {privateThreadId && <div style={{marginTop:12,borderTop:"1px solid #dbe5ed",paddingTop:12}}>
+                  <div style={{fontWeight:900,marginBottom:8}}>Percakapan</div>
+                  <div style={{background:"#eef4f6",borderRadius:12,padding:10,maxHeight:280,overflowY:"auto",display:"grid",gap:8}}>
+                    {privateThreadMessages.map(m=><div key={m.id} style={{maxWidth:"86%",justifySelf:m.sender_type==="coach"?"end":"start",background:m.sender_type==="coach"?"#d8f4e8":"#fff",border:"1px solid #d6e1e6",borderRadius:12,padding:"8px 10px"}}>
+                      <div style={{fontSize:10,fontWeight:900,color:"#087b72"}}>{m.sender_type==="coach"?"Coach":m.sender_name}</div>
+                      <div style={{fontSize:13,whiteSpace:"pre-wrap"}}>{m.message}</div>
+                    </div>)}
+                  </div>
+                  <div style={{display:"flex",gap:7,marginTop:8}}>
+                    <input value={privateReplyText} onChange={e=>setPrivateReplyText(e.target.value)} placeholder="Balas pengajuan Private..." style={{flex:1,padding:10,border:"1px solid #b8cbd5",borderRadius:9}}/>
+                    <button type="button" className="register-submit" style={{width:"auto"}} disabled={privateRequestBusy} onClick={()=>kirimPesanPrivate("coach","Coach Teguh")}>Kirim</button>
+                  </div>
+                </div>}
+              </section>
+
               <h3 style={{marginTop:12}}>Daftar Jadwal</h3>
               <div style={{overflowX:"auto",maxHeight:430,overflowY:"auto",border:"1px solid #dbe5ed",borderRadius:10,marginTop:6}}>
                 <table style={{width:"100%",minWidth:1040,borderCollapse:"collapse",tableLayout:"fixed",fontSize:12.5,textAlign:"left"}}>
@@ -2229,24 +2383,52 @@ const formattedSchedules = await Promise.all(
         <main style={{background:"#dfe9ef",minHeight:"75vh",padding:"28px 18px"}}>
           <div style={{maxWidth:1050,margin:"0 auto"}}>
             <button className="back-button" onClick={()=>setPage("home")}>← Home</button>
-            <div style={{textAlign:"center",margin:"10px 0 22px"}}>
+            <div style={{textAlign:"center",margin:"10px 0 16px"}}>
               <div style={{letterSpacing:3,color:"#079f79",fontWeight:700,fontSize:13}}>PENDAFTARAN LATIHAN</div>
-              <h2 style={{fontSize:30,margin:"8px 0"}}>Pilih Jadwal & Daftar</h2>
-              <p style={{color:"#64748b"}}>Pilih jadwal yang tersedia. Setelah memilih, formulir pendaftaran akan terbuka.</p>
+              <h2 style={{fontSize:30,margin:"8px 0"}}>Pilih Program Latihan</h2>
             </div>
-            <div className="day-filter">
-              {days.map(day=><button key={day} className={selectedDay===day?"active":""} onClick={()=>setSelectedDay(day)}>{day}</button>)}
+            <div style={{maxWidth:680,margin:"0 auto 18px",display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+              {["Group","Private"].map(type=><button key={type} type="button" onClick={()=>setRegistrationProgram(type)}
+                style={{border:registrationProgram===type?"2px solid #087b72":"1px solid #b9c9d0",background:registrationProgram===type?"#087b72":"#fff",color:registrationProgram===type?"#fff":"#17394a",borderRadius:14,padding:"13px 8px",cursor:"pointer",fontWeight:900}}>
+                <div style={{fontSize:23}}>{type==="Group"?"👥":"💬"}</div>
+                <div style={{fontSize:14,marginTop:5}}>{type==="Group"?"LATIHAN GROUP":"PENGAJUAN PRIVATE"}</div>
+                <div style={{fontSize:10,opacity:.8,marginTop:3}}>{type==="Group"?"3–4 peserta":"Chat pribadi dengan Coach"}</div>
+              </button>)}
             </div>
-            <div className="schedule-grid">
-              {filteredSchedules.length===0 ? <p style={{textAlign:"center",gridColumn:"1/-1"}}>Belum ada jadwal tersedia untuk hari ini.</p> :
-                filteredSchedules.map(item=><div className="schedule-card" key={item.id}>
-                  <div className="schedule-top"><span className="day">{item.day}</span><span className="time">{item.time}</span></div>
-                  <div className="coach">{item.type==="Private"?"PRIVATE":"GRUP"} • {item.registered}/{item.quota} peserta</div>
-                  <button className="choose-btn" disabled={!item.available} onClick={()=>chooseSchedule(item)}>
-                    {item.available?"Pilih & Daftar":"Penuh / Ditutup"}
-                  </button>
-                </div>)}
-            </div>
+
+            {registrationProgram==="Group" ? <>
+              <div className="day-filter">{days.map(day=><button key={day} className={selectedDay===day?"active":""} onClick={()=>setSelectedDay(day)}>{day}</button>)}</div>
+              <div className="schedule-grid">
+                {filteredSchedules.filter(item=>item.type==="Group").length===0 ? <div style={{textAlign:"center",gridColumn:"1/-1",background:"#fff",padding:20,borderRadius:14}}>Belum ada jadwal Group tersedia.</div> :
+                  filteredSchedules.filter(item=>item.type==="Group").map(item=><div className="schedule-card" key={item.id}>
+                    <div className="schedule-top"><span className="day">{item.day}</span><span className="time">{item.time}</span></div>
+                    <div className="coach">GRUP • {item.registered}/{item.quota} peserta</div>
+                    <button className="choose-btn" disabled={!item.available} onClick={()=>chooseSchedule(item)}>{item.available?"Pilih Group & Daftar":"Penuh / Ditutup"}</button>
+                  </div>)}
+              </div>
+            </> : <section style={{maxWidth:680,margin:"0 auto",background:"#fff",padding:16,borderRadius:16,boxShadow:"0 8px 24px rgba(20,55,75,.08)"}}>
+              <h3 style={{margin:"0 0 6px"}}>💬 Pengajuan Private</h3>
+              <p style={{fontSize:12,color:"#64748b",marginTop:0}}>Cukup tulis seperti sedang menghubungi Coach. Percakapan ini tidak tampil di Chat Publik.</p>
+
+              {!privateThreadId ? <form onSubmit={mulaiPengajuanPrivate}>
+                <div className="form-group"><label>Nama</label><input required placeholder="Contoh: Teguh" value={privateName} onChange={e=>setPrivateName(e.target.value)}/></div>
+                <div className="form-group"><label>Pesan untuk Coach</label><textarea required rows={4} placeholder="Pak, saya Teguh. Saya mau Private hari Sabtu jam 18.00–20.00, apakah bisa Pak?" value={privateMessage} onChange={e=>setPrivateMessage(e.target.value)}/></div>
+                <button className="register-submit" disabled={privateRequestBusy}>{privateRequestBusy?"Mengirim...":"Kirim ke Coach"}</button>
+                <button type="button" className="back-button" style={{width:"100%",marginTop:8}} onClick={bukaPercakapanPrivateSaya}>Buka Percakapan Saya</button>
+              </form> : <>
+                <div style={{background:"#eef4f6",borderRadius:12,padding:10,maxHeight:330,overflowY:"auto",display:"grid",gap:8}}>
+                  {privateThreadMessages.map(m=><div key={m.id} style={{maxWidth:"86%",justifySelf:m.sender_type==="member"?"end":"start",background:m.sender_type==="member"?"#d8f4e8":"#fff",border:"1px solid #d6e1e6",borderRadius:12,padding:"8px 10px"}}>
+                    <div style={{fontSize:10,fontWeight:900,color:"#087b72"}}>{m.sender_type==="coach"?"Coach Teguh":m.sender_name}</div>
+                    <div style={{fontSize:13,whiteSpace:"pre-wrap"}}>{m.message}</div>
+                  </div>)}
+                </div>
+                <div style={{display:"flex",gap:7,marginTop:8}}>
+                  <input value={privateReplyText} onChange={e=>setPrivateReplyText(e.target.value)} placeholder="Tulis balasan... misalnya nomor WA atau OK" style={{flex:1,padding:10,border:"1px solid #b8cbd5",borderRadius:9}}/>
+                  <button type="button" className="register-submit" style={{width:"auto"}} disabled={privateRequestBusy} onClick={()=>kirimPesanPrivate("member",privateName || "Member")}>Kirim</button>
+                </div>
+                <button type="button" className="back-button" style={{width:"100%",marginTop:8}} onClick={()=>{setPrivateThreadId(null);setPrivateThreadMessages([]);}}>Pengajuan Baru</button>
+              </>}
+            </section>}
           </div>
         </main>
       )}
