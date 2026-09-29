@@ -1176,91 +1176,51 @@ const formattedSchedules = await Promise.all(
       )}
 
       <style>{`
+        *, *::before, *::after { box-sizing: border-box; }
+        html, body { width: 100%; min-width: 320px; margin: 0; padding: 0; }
+        #root { width: 100% !important; max-width: none !important; min-width: 320px; margin: 0 !important; padding: 0 !important; }
+        body { overflow-x: hidden; background: #061a3a; }
+        .app { width: 100%; max-width: none; min-height: 100vh; overflow-x: hidden; }
+        .header { min-height: 58px !important; padding: 8px clamp(12px, 3vw, 28px) !important; gap: 12px; }
+        .brand { min-width: 0; cursor: pointer; }
+        .login-btn { flex: 0 0 auto; white-space: nowrap; }
+        .hero { min-height: clamp(250px, 43vw, 330px) !important; padding: 16px clamp(12px, 4vw, 42px) 20px !important; background-position: center 58% !important; overflow: hidden; }
+        .hero-content { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; }
+        .hero-content h2 { max-width: 620px; text-wrap: balance; }
+        .hero-description { position: static !important; width: min(100%, 560px) !important; margin: 12px auto 0 !important; text-align: center !important; font-size: clamp(11px, 2.3vw, 14px) !important; line-height: 1.45 !important; }
+        .quick-actions { padding: 16px 12px 12px !important; margin-top: 0 !important; }
+        .quick-actions > div { gap: 10px !important; }
+        .quick-actions button { min-height: 70px; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .app > main:not(.registration-page):not(.success-page) { min-height: auto !important; padding-top: 16px !important; padding-bottom: 20px !important; }
+        .content { width: min(100%, 1050px); }
         .admin-compact h2 { margin: 2px 0 8px !important; color:#062f46; }
         .admin-compact h3 { margin-top: 8px !important; margin-bottom: 7px !important; color:#073b55; }
-        .admin-compact .registration-form {
-          margin: 8px 0 12px !important;
-          padding: 14px !important;
-          background: rgba(255,255,255,.78) !important;
-          border: 1px solid #b9d0da !important;
-          border-radius: 12px !important;
-          box-shadow: 0 5px 16px rgba(0,43,64,.07);
-        }
+        .admin-compact .registration-form { margin: 8px 0 12px !important; padding: 14px !important; background: rgba(255,255,255,.78) !important; border: 1px solid #b9d0da !important; border-radius: 12px !important; box-shadow: 0 5px 16px rgba(0,43,64,.07); }
         .admin-compact .form-group { margin-bottom: 8px !important; }
         .admin-compact .form-group label { margin-bottom: 3px !important; font-size:12px !important; color:#16485d; }
-        .admin-compact input,
-        .admin-compact select { min-height: 36px !important; padding: 7px 10px !important; }
+        .admin-compact input, .admin-compact select { min-height: 36px !important; padding: 7px 10px !important; }
         .admin-compact p { margin-top: 5px !important; margin-bottom: 5px !important; line-height:1.3 !important; }
         .admin-compact .register-submit { margin-top: 6px !important; min-height:38px !important; }
         .admin-compact section { box-shadow:0 5px 16px rgba(0,43,64,.06); }
         .admin-compact table th { background:#063d56; }
         .admin-compact table td { line-height:1.2; }
-        .clickable-participant-row,
-        .clickable-schedule-row { cursor:pointer; }
-        .clickable-participant-row > td,
-        .clickable-schedule-row > td {
-          transition: background-color .16s ease, color .16s ease, box-shadow .16s ease !important;
-        }
-        .clickable-participant-row:hover > td {
-          background-color:#bfe9df !important;
-        }
-        .clickable-participant-row:hover > td:first-child {
-          box-shadow:inset 5px 0 0 #047857 !important;
-        }
-        .clickable-schedule-row:hover > td {
-          background-color:#c7e9f5 !important;
-        }
-        .clickable-schedule-row:hover > td:first-child {
-          box-shadow:inset 5px 0 0 #08799a !important;
-        }
-        /* HOME mobile: penyesuaian visual sesuai mockup terbaru */
+        .clickable-participant-row, .clickable-schedule-row { cursor:pointer; }
+        .clickable-participant-row > td, .clickable-schedule-row > td { transition: background-color .16s ease, color .16s ease, box-shadow .16s ease !important; }
+        .clickable-participant-row:hover > td { background-color:#bfe9df !important; }
+        .clickable-participant-row:hover > td:first-child { box-shadow:inset 5px 0 0 #047857 !important; }
+        .clickable-schedule-row:hover > td { background-color:#c7e9f5 !important; }
+        .clickable-schedule-row:hover > td:first-child { box-shadow:inset 5px 0 0 #08799a !important; }
+        footer { overflow: hidden; }
         @media (max-width: 600px) {
-          .topbar {
-            padding-top: 8px !important;
-            padding-bottom: 7px !important;
-          }
-          .hero {
-            background-position: center 58% !important;
-          }
-          footer {
-            min-height: 0 !important;
-            height: auto !important;
-            margin-bottom: 0 !important;
-            padding-bottom: 14px !important;
-          }
-          html, body, #root {
-            margin: 0 !important;
-            margin-bottom: 0 !important;
-            background: #061a3a !important;
-          }
-          .app {
-            background: #061a3a !important;
-          }
-          /* HOME final contact/nav */
-          body, #root, .app { background:#061a3a !important; }
-
-          /* =========================================================
-             HOME - KHUSUS HP
-             Desktop tidak berubah.
-             Teks hero dinaikkan, foto/background diturunkan.
-          ========================================================= */
-          @media (max-width: 600px) {
-            .hero {
-              /* Nilai lebih besar = framing foto terlihat lebih ke bawah */
-              background-position: center 76% !important;
-            }
-
-            /* Naikkan isi teks hero tanpa menggeser foto */
-            .hero > div {
-              transform: translateY(-22px);
-            }
-          }
-
-          /* HOME mobile terbaru: teks atas naik, foto turun, menu bawah lebih dekat WhatsApp */
-          .hero {
-            background-position: center 66% !important;
-          }
-
+          .header { min-height: 54px !important; padding-top: 6px !important; padding-bottom: 6px !important; }
+          .hero { min-height: 270px !important; background-position: center 64% !important; }
+          .hero-content h2 { font-size: clamp(22px, 7vw, 30px) !important; line-height: 1.08 !important; margin: 7px 0 0 !important; }
+          .hero-description { margin-top: 14px !important; }
+          .quick-actions { padding-top: 12px !important; }
+          .quick-actions > div { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 8px !important; }
+          .quick-actions button { min-height: 66px; padding: 7px 5px !important; }
+          .app > main:not(.registration-page):not(.success-page) { padding-left: 10px !important; padding-right: 10px !important; }
+          footer { padding-top: 10px !important; padding-bottom: 12px !important; }
         }
       `}</style>
 
@@ -1566,14 +1526,14 @@ const formattedSchedules = await Promise.all(
             <div className="hero-content" style={{maxWidth:610,padding:0,width:"100%",margin:"0 auto",textAlign:"center"}}>
               <div className="hero-label" style={{fontSize:"clamp(9px,2.3vw,11px)",marginBottom:4,padding:"5px 10px"}}>🏓 PROGRAM LATIHAN TENIS MEJA</div>
               <h2 style={{fontSize:"clamp(23px,5.7vw,36px)",lineHeight:1.02,margin:"4px 0 6px"}}>Latihan Lebih Teratur,<br/><span>Progress Lebih Terukur.</span></h2>
-              <div style={{position:"absolute",left:"clamp(14px,4vw,42px)",bottom:14,width:"min(43%,250px)",textAlign:"left",fontSize:"clamp(9px,2.3vw,12px)",lineHeight:1.35,color:"#fff",textShadow:"0 2px 5px rgba(0,0,0,.75)"}}>
+              <div className="hero-description" style={{position:"static",width:"100%",textAlign:"center",fontSize:"clamp(11px,2.3vw,14px)",lineHeight:1.45,color:"#fff",textShadow:"0 2px 5px rgba(0,0,0,.75)"}}>
                 Program latihan tenis meja untuk semua level, dengan pilihan Private maupun Grup 3–4 orang dan jadwal yang fleksibel.
               </div>
 
             </div>
           </section>
 
-          <section style={{background:"linear-gradient(180deg,#07506a 0%,#6f9caf 18%,#d8e1e6 48%,#c7d6de 62%,#4f8eaa 82%,#08608d 100%)",padding:"38px 12px 10px",marginTop:-1}}>
+          <section className="quick-actions" style={{background:"linear-gradient(180deg,#07506a 0%,#6f9caf 18%,#d8e1e6 48%,#c7d6de 62%,#4f8eaa 82%,#08608d 100%)",padding:"16px 12px 12px",marginTop:0}}>
             <div style={{maxWidth:1050,margin:"0 auto",display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:7}}>
               <button type="button" onClick={()=>setPage("pendaftaran")}
                 style={{border:0,borderRadius:11,padding:"6px 6px",background:"linear-gradient(145deg,rgba(8,111,158,.94),rgba(3,65,96,.92))",border:"1px solid rgba(210,240,246,.48)",boxShadow:"0 7px 16px rgba(0,35,55,.18),inset 0 1px 0 rgba(255,255,255,.16)",color:"#fff",cursor:"pointer"}}>
