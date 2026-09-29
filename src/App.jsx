@@ -1217,8 +1217,8 @@ const formattedSchedules = await Promise.all(
         footer { overflow: hidden; }
         @media (max-width: 600px) {
           .header { min-height: 54px !important; padding-top: 6px !important; padding-bottom: 6px !important; }
-          .hero { height: 280px !important; min-height: 280px !important; background-position: center 64% !important; }
-          .hero-content { transform: none !important; padding-top: 4px; }
+          .hero { height: 280px !important; min-height: 280px !important; background-position: center 80% !important; }
+          .hero-content { transform: translateY(-18px) !important; padding-top: 4px; }
           .hero-content h2 { font-size: clamp(22px, 7vw, 30px) !important; line-height: 1.08 !important; margin: 7px 0 0 !important; }
           .hero-description { margin-top: 12px !important; }
           .app footer .home-contact-icon { width: 48px !important; height: 48px !important; min-width: 48px !important; min-height: 48px !important; font-size: 24px !important; }
