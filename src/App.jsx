@@ -1215,28 +1215,6 @@ const formattedSchedules = await Promise.all(
         .clickable-schedule-row:hover > td { background-color:#c7e9f5 !important; }
         .clickable-schedule-row:hover > td:first-child { box-shadow:inset 5px 0 0 #08799a !important; }
         footer { overflow: hidden; }
-
-        /* Footer navy PALING BAWAH: tinggi dipaksa 50px */
-        .app > footer.qr-footer-final {
-          box-sizing: border-box !important;
-          height: 50px !important;
-          min-height: 50px !important;
-          max-height: 50px !important;
-          padding: 0 12px !important;
-          margin: 0 !important;
-          display: flex !important;
-          align-items: center !important;
-          justify-content: center !important;
-          overflow: hidden !important;
-        }
-        .app > footer.qr-footer-final > div {
-          height: 44px !important;
-          min-height: 44px !important;
-          max-height: 44px !important;
-          margin: 0 !important;
-          padding: 0 !important;
-          align-items: center !important;
-        }
         @media (max-width: 600px) {
           .header { min-height: 54px !important; padding-top: 6px !important; padding-bottom: 6px !important; }
           .hero { height: 280px !important; min-height: 280px !important; background-position: center 80% !important; }
@@ -1251,11 +1229,21 @@ const formattedSchedules = await Promise.all(
           .app > main:not(.registration-page):not(.success-page) { padding-left: 10px !important; padding-right: 10px !important; }
           footer { padding-top: 10px !important; padding-bottom: 12px !important; }
 
+          /* Footer QR terakhir:
+             konten tetap/turun, yang dipotong hanya ruang navy di BAWAH */
           .app > footer.qr-footer-final {
-            height: 50px !important;
-            min-height: 50px !important;
-            max-height: 50px !important;
-            padding: 0 8px !important;
+            min-height: 0 !important;
+            height: auto !important;
+            max-height: none !important;
+            padding-top: 13px !important;
+            padding-bottom: 2px !important;
+            margin: 0 !important;
+            display: block !important;
+            overflow: hidden !important;
+          }
+          .app > footer.qr-footer-final > div {
+            margin: 0 !important;
+            padding: 0 !important;
           }
         }
       `}</style>
@@ -3607,7 +3595,7 @@ const formattedSchedules = await Promise.all(
 
 
 
-      <footer className="qr-footer-final" style={{padding:0,minHeight:50,height:50,maxHeight:50,background:"#061a3a",margin:0,display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden"}}>
+      <footer className="qr-footer-final" style={{padding:"13px 12px 2px",minHeight:0,height:"auto",background:"#061a3a",margin:0}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,lineHeight:1.15}}>
           <button
             type="button"
