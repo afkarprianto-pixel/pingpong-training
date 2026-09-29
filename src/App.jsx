@@ -46,6 +46,7 @@ function App() {
   const [loginBusy, setLoginBusy] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
   const [page, setPage] = useState("home");
+  const [coachMenu, setCoachMenu] = useState("home");
   const [publicChats, setPublicChats] = useState([]);
   const [chatName, setChatName] = useState(() => localStorage.getItem("pingtrn_chat_name") || "");
   const [chatMessage, setChatMessage] = useState("");
@@ -567,6 +568,7 @@ function App() {
 
   function editSchedule(item) {
 
+    setCoachMenu("schedule");
     setEditId(item.id);
 
     setScheduleForm({ day:item.day, start_time:item.start_time?.slice(0,5)||"", end_time:item.end_time?.slice(0,5)||"", type:item.type||"Group", coach:item.coach||"Teguh Orina", quota:item.quota, min_participants:item.min_participants, is_active:item.activeRaw, coach_rate: Number(item.coach_rate ?? (item.type==="Private"?350000:300000)), rental_rate_per_hour: Number(item.rental_rate_per_hour ?? 50000) });
@@ -636,6 +638,42 @@ function App() {
   const [privateThreadMessages, setPrivateThreadMessages] = useState([]);
   const [privateReplyText, setPrivateReplyText] = useState("");
   const [privateRequestBusy, setPrivateRequestBusy] = useState(false);
+  const [visitorCount, setVisitorCount] = useState(0);
+  const [newsList, setNewsList] = useState([]);
+  const [loadingNews, setLoadingNews] = useState(false);
+  const [savingNews, setSavingNews] = useState(false);
+  const [uploadingNewsImage, setUploadingNewsImage] = useState(false);
+  const [editNewsId, setEditNewsId] = useState(null);
+  const [selectedNews, setSelectedNews] = useState(null);
+  const [newsForm, setNewsForm] = useState({
+    title:"",
+    category:"Berita Tenis Meja",
+    image_url:"",
+    content:"",
+    is_published:true
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+    async function catatDanHitungPengunjung() {
+      try {
+        let visitorId = localStorage.getItem("pingtrn_visitor_id");
+        if (!visitorId) {
+          visitorId = window.crypto?.randomUUID?.() || `visitor-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+          localStorage.setItem("pingtrn_visitor_id", visitorId);
+          const { error: insertError } = await supabase.from("site_visits").insert({ visitor_id: visitorId });
+          if (insertError) console.error("Gagal mencatat pengunjung:", insertError);
+        }
+        const { count, error } = await supabase.from("site_visits").select("id", { count:"exact", head:true });
+        if (error) console.error("Gagal menghitung pengunjung:", error);
+        else if (!cancelled) setVisitorCount(count || 0);
+      } catch (error) {
+        console.error("Visitor counter error:", error);
+      }
+    }
+    catatDanHitungPengunjung();
+    return () => { cancelled = true; };
+  }, []);
 
 
 
@@ -803,10 +841,104 @@ const formattedSchedules = await Promise.all(
 
     loadSchedules();
     loadTrainingVideos();
+    loadNews();
 
   }, []);
 
 
+
+  async function loadNews() {
+    setLoadingNews(true);
+    const { data, error } = await supabase
+      .from("table_tennis_news")
+      .select("*")
+      .order("published_at", { ascending:false });
+    setLoadingNews(false);
+    if (error) {
+      console.error("Gagal mengambil berita:", error);
+      return;
+    }
+    setNewsList(data || []);
+  }
+
+  async function uploadNewsImage(file) {
+    if (!isPelatih || !file) return;
+    if (!String(file.type || "").startsWith("image/")) {
+      alert("File harus berupa foto/gambar.");
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      alert("Ukuran foto maksimal 8 MB.");
+      return;
+    }
+    setUploadingNewsImage(true);
+    const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g,"");
+    const fileName = `berita-${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext || "jpg"}`;
+    const { error } = await supabase.storage.from("news-images").upload(fileName, file, {
+      cacheControl:"3600",
+      upsert:false,
+      contentType:file.type || undefined
+    });
+    if (error) {
+      setUploadingNewsImage(false);
+      alert("Upload foto gagal: " + error.message);
+      return;
+    }
+    const { data } = supabase.storage.from("news-images").getPublicUrl(fileName);
+    setNewsForm(p=>({...p,image_url:data?.publicUrl || ""}));
+    setUploadingNewsImage(false);
+  }
+
+  async function saveNews(e) {
+    e.preventDefault();
+    if (!isPelatih || savingNews) return;
+    if (!newsForm.title.trim() || !newsForm.content.trim()) {
+      alert("Judul dan isi berita wajib diisi.");
+      return;
+    }
+    setSavingNews(true);
+    const payload = {
+      title: newsForm.title.trim(),
+      category: newsForm.category.trim() || "Berita Tenis Meja",
+      image_url: newsForm.image_url.trim() || null,
+      content: newsForm.content.trim(),
+      is_published: Boolean(newsForm.is_published)
+    };
+    const request = editNewsId
+      ? supabase.from("table_tennis_news").update(payload).eq("id", editNewsId)
+      : supabase.from("table_tennis_news").insert(payload);
+    const { error } = await request;
+    setSavingNews(false);
+    if (error) {
+      alert("Gagal menyimpan berita: " + error.message);
+      return;
+    }
+    setEditNewsId(null);
+    setNewsForm({title:"",category:"Berita Tenis Meja",image_url:"",content:"",is_published:true});
+    await loadNews();
+    alert(editNewsId ? "Berita berhasil diperbarui." : "Berita berhasil diterbitkan.");
+  }
+
+  function editNews(item) {
+    setEditNewsId(item.id);
+    setNewsForm({
+      title:item.title || "",
+      category:item.category || "Berita Tenis Meja",
+      image_url:item.image_url || "",
+      content:item.content || "",
+      is_published:item.is_published !== false
+    });
+  }
+
+  async function deleteNews(item) {
+    if (!isPelatih || !window.confirm(`Hapus berita "${item.title}"?`)) return;
+    const { error } = await supabase.from("table_tennis_news").delete().eq("id", item.id);
+    if (error) alert("Gagal menghapus berita: " + error.message);
+    else {
+      if (selectedNews?.id === item.id) setSelectedNews(null);
+      await loadNews();
+    }
+  }
 
   async function loadPrivateRequests() {
     if (!isPelatih) return;
@@ -913,6 +1045,7 @@ const formattedSchedules = await Promise.all(
       is_active:true
     });
     setEditId(null);
+    setCoachMenu("schedule");
     await supabase.from("private_requests").update({status:"Siap Dibuat Jadwal"}).eq("id",r.id);
     window.scrollTo(0,0);
     alert("Data jadwal Private sudah dimasukkan ke form Tambah Jadwal. Periksa lalu klik Simpan Jadwal.");
@@ -1264,7 +1397,7 @@ const formattedSchedules = await Promise.all(
 
         <button className="login-btn" onClick={() => setPage(isPelatih ? "admin" : "login")}>
 
-          {isPelatih ? "Kelola Jadwal" : "Login Pelatih"}
+          {isPelatih ? "Ruang Pelatih" : "Login Pelatih"}
 
         </button>
 
@@ -1365,6 +1498,37 @@ const formattedSchedules = await Promise.all(
             transform: translateY(0) !important;
           }
         }
+
+        /* ===== TAMBAH JADWAL COMPACT V3 ===== */
+        .coach-schedule-compact .registration-form{padding:8px 12px!important;margin:4px 0!important}
+        .coach-schedule-compact .registration-form h3{margin:0 0 5px!important;font-size:17px!important;text-align:center}
+        .coach-schedule-compact .form-group{margin-bottom:3px!important}
+        .coach-schedule-compact .form-group label{font-size:9px!important;margin-bottom:2px!important}
+        .coach-schedule-compact input,.coach-schedule-compact select{min-height:30px!important;height:30px!important;padding:3px 8px!important;font-size:10px!important}
+        .coach-schedule-compact p{font-size:9px!important;margin:2px 0!important}
+        .coach-schedule-compact .cost-summary-compact{padding:6px 9px!important;margin:3px 0!important;border-radius:12px!important}
+        .coach-schedule-compact .cost-summary-compact h3{font-size:13px!important;margin:0 0 1px!important}
+        .coach-schedule-compact .cost-summary-compact>p{font-size:8px!important;margin:0 0 4px!important}
+        .coach-schedule-compact .cost-body-compact{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 250px;gap:8px;align-items:end}
+        .coach-schedule-compact .cost-field-compact{min-width:0}
+        .coach-schedule-compact .cost-field-compact .money-row{display:grid;grid-template-columns:20px minmax(0,1fr) 14px;gap:3px;align-items:center}
+        .coach-schedule-compact .cost-field-compact input{width:100%!important;box-sizing:border-box}
+        .coach-schedule-compact .cost-lines{display:grid;grid-template-columns:86px 8px 1fr;gap:1px 3px;width:100%;margin:0;font-size:9px;line-height:1.15;text-align:left;align-self:center}
+        .coach-schedule-compact .cost-lines .colon{text-align:center;font-weight:700}
+        .coach-schedule-compact .cost-lines .value{font-weight:700;white-space:nowrap}
+        .coach-schedule-compact .register-submit{min-height:31px!important;margin-top:3px!important;padding:4px 10px!important}
+        .coach-schedule-compact .schedule-active-row{margin:2px 0!important;font-size:10px!important}
+        @media(min-width:701px){
+          .coach-schedule-compact .registration-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:10px;align-items:start}
+          .coach-schedule-compact .registration-form>h3,
+          .coach-schedule-compact .registration-form>.cost-summary-compact,
+          .coach-schedule-compact .registration-form>.schedule-active-row,
+          .coach-schedule-compact .registration-form>.register-submit{grid-column:1/-1}
+        }
+        @media(max-width:700px){
+          .coach-schedule-compact .cost-body-compact{grid-template-columns:1fr}
+          .coach-schedule-compact .cost-lines{width:min(100%,300px);margin:3px auto 0}
+        }
       `}</style>
 
       {page === "admin" && (
@@ -1373,8 +1537,59 @@ const formattedSchedules = await Promise.all(
 
           {!authReady ? <p>Memeriksa akun...</p> : !isPelatih ? <p>Akses khusus pelatih. <button onClick={()=>setPage("login")}>Login</button></p> : <>
 
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,flexWrap:"wrap"}}><h2>Kelola Jadwal</h2><button className="back-button" onClick={logoutPelatih}>Logout</button></div>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,flexWrap:"wrap"}}>
+              <div>
+                <h2 style={{marginBottom:2}}>Ruang Pelatih</h2>
+                <div style={{fontSize:11,color:"#607d8b"}}>Pilih menu yang ingin dikelola.</div>
+              </div>
+              <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>
+                {coachMenu!=="home" && <button type="button" className="back-button" onClick={()=>{setCoachMenu("home");window.scrollTo(0,0);}}>← Ruang Pelatih</button>}
+                <button className="back-button" onClick={logoutPelatih}>Logout</button>
+              </div>
+            </div>
 
+            {coachMenu==="home" && (
+              <section style={{margin:"14px 0",padding:14,background:"rgba(255,255,255,.82)",border:"1px solid #b9d0da",borderRadius:14}}>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:10}}>
+                  {[
+                    ["schedule","📅","Tambah Jadwal","Buat jadwal Group atau Private"],
+                    ["cost","💰","Pengaturan Biaya Latihan","Atur biaya coach dan sewa meja"],
+                    ["participants","👥","Daftar Peserta","Data member dan pembayaran"],
+                    ["private","💬","Pengajuan Private","Buka dan balas permintaan Private"],
+                    ["news","📰","Kelola Berita Tenis Meja","Tambah, edit dan terbitkan berita"],
+                    ["scheduleList","📋","Daftar Jadwal","Kelola jadwal yang sudah dibuat"]
+                  ].map(([key,icon,title,desc])=>(
+                    <button key={key} type="button" onClick={()=>{setCoachMenu(key);window.scrollTo(0,0);}}
+                      style={{minHeight:108,padding:"12px 8px",border:"1px solid #b9d0da",borderRadius:13,background:"linear-gradient(145deg,#ffffff,#edf5f7)",boxShadow:"0 5px 14px rgba(0,43,64,.07)",cursor:"pointer",textAlign:"center"}}>
+                      <div style={{fontSize:28,lineHeight:1}}>{icon}</div>
+                      <div style={{fontSize:13,fontWeight:900,color:"#073b55",marginTop:7}}>{title}</div>
+                      <div style={{fontSize:10,color:"#607d8b",lineHeight:1.3,marginTop:3}}>{desc}</div>
+                    </button>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {coachMenu==="cost" && (
+              <section style={{margin:"14px 0",padding:14,background:"rgba(255,255,255,.84)",border:"1px solid #b9d0da",borderRadius:12}}>
+                <h3 style={{marginTop:0}}>💰 Pengaturan Biaya Latihan</h3>
+                <div className="form-group"><label>Jenis Latihan</label>
+                  <select value={scheduleForm.type} onChange={e=>setScheduleForm(p=>({...p,type:e.target.value,coach_rate:e.target.value==="Private"?350000:300000}))}>
+                    <option>Group</option><option>Private</option>
+                  </select>
+                </div>
+                <div className="form-group"><label>Rate Coach / Sesi</label>
+                  <input inputMode="numeric" value={angkaRupiah(scheduleForm.coach_rate)} onChange={e=>setScheduleForm(p=>({...p,coach_rate:bacaRupiah(e.target.value)}))}/>
+                </div>
+                <div className="form-group"><label>Sewa Meja / Jam</label>
+                  <input inputMode="numeric" value={angkaRupiah(scheduleForm.rental_rate_per_hour)} onChange={e=>setScheduleForm(p=>({...p,rental_rate_per_hour:bacaRupiah(e.target.value)}))}/>
+                </div>
+                <div style={{fontSize:12,color:"#526b78",background:"#edf5f7",padding:10,borderRadius:9}}>Nilai ini akan dibawa ke form Tambah Jadwal dan masih dapat disesuaikan untuk setiap jadwal.</div>
+                <button type="button" className="register-submit" onClick={()=>{setCoachMenu("schedule");window.scrollTo(0,0);}}>Lanjut ke Tambah Jadwal</button>
+              </section>
+            )}
+
+            {coachMenu==="schedule" && (<div className="coach-schedule-compact">
             <form className="registration-form" onSubmit={saveSchedule} style={{margin:"8px 0 12px",maxWidth:"none"}}>
 
               <h3>{editId ? "Edit Jadwal" : "Tambah Jadwal"}</h3>
@@ -1415,42 +1630,53 @@ const formattedSchedules = await Promise.all(
 
               <div className="form-group"><label>Pelatih</label><input value={scheduleForm.coach} required onChange={e=>setScheduleForm(p=>({...p,coach:e.target.value}))}/></div>
 
-              <div style={{padding:10,border:"1px solid #b9d0da",borderRadius:10,marginBottom:9,background:"linear-gradient(135deg,#edf5f7,#dcebef)"}}>
-                <h3 style={{marginTop:0}}>Pengaturan Biaya Latihan</h3>
-                <p style={{fontSize:13}}>Tarif berlaku untuk jadwal ini dan bisa diubah kapan saja.</p>
-                <div className="form-group">
-                  <label>Tarif Pelatih per Sesi</label>
-                  <div style={{display:"flex",alignItems:"center",gap:6}}>
-                    <strong>Rp</strong>
-                    <input inputMode="numeric" value={angkaRupiah(scheduleForm.coach_rate)} onChange={e=>setScheduleForm(p=>({...p,coach_rate:bacaRupiah(e.target.value)}))}/>
-                    <strong>,-</strong>
+              <div className="cost-summary-compact" style={{border:"1px solid #b9d0da",background:"linear-gradient(135deg,#edf5f7,#dcebef)"}}>
+                <h3>Pengaturan Biaya Latihan</h3>
+                <p>Tarif berlaku untuk jadwal ini dan bisa diubah kapan saja.</p>
+
+                <div className="cost-body-compact">
+                  <div className="cost-field-compact">
+                    <label style={{display:"block",textAlign:"center",fontSize:9,fontWeight:800,marginBottom:2}}>Tarif Pelatih per Sesi</label>
+                    <div className="money-row">
+                      <strong style={{fontSize:10}}>Rp</strong>
+                      <input inputMode="numeric" value={angkaRupiah(scheduleForm.coach_rate)} onChange={e=>setScheduleForm(p=>({...p,coach_rate:bacaRupiah(e.target.value)}))}/>
+                      <strong style={{fontSize:10}}>,-</strong>
+                    </div>
+                  </div>
+
+                  <div className="cost-field-compact">
+                    <label style={{display:"block",textAlign:"center",fontSize:9,fontWeight:800,marginBottom:2}}>Sewa Lapangan per Jam</label>
+                    <div className="money-row">
+                      <strong style={{fontSize:10}}>Rp</strong>
+                      <input inputMode="numeric" value={angkaRupiah(scheduleForm.rental_rate_per_hour)} onChange={e=>setScheduleForm(p=>({...p,rental_rate_per_hour:bacaRupiah(e.target.value)}))}/>
+                      <strong style={{fontSize:10}}>,-</strong>
+                    </div>
+                  </div>
+
+                  <div className="cost-lines">
+                    <span>Durasi</span><span className="colon">:</span><span className="value">{([1,2,3].includes(durasiJam(scheduleForm.start_time,scheduleForm.end_time))?durasiJam(scheduleForm.start_time,scheduleForm.end_time):2)} jam</span>
+                    <span>Sewa Total</span><span className="colon">:</span><span className="value">{rupiah(scheduleForm.rental_rate_per_hour * ([1,2,3].includes(durasiJam(scheduleForm.start_time,scheduleForm.end_time))?durasiJam(scheduleForm.start_time,scheduleForm.end_time):2))}</span>
+                    <span>Total Sesi</span><span className="colon">:</span><span className="value">{rupiah(Number(scheduleForm.coach_rate) + Number(scheduleForm.rental_rate_per_hour)*([1,2,3].includes(durasiJam(scheduleForm.start_time,scheduleForm.end_time))?durasiJam(scheduleForm.start_time,scheduleForm.end_time):2))}</span>
+                    {scheduleForm.type==="Private" ? <>
+                      <span>Private (1 orang)</span><span className="colon">:</span><span className="value">{rupiah(Number(scheduleForm.coach_rate)+Number(scheduleForm.rental_rate_per_hour)*([1,2,3].includes(durasiJam(scheduleForm.start_time,scheduleForm.end_time))?durasiJam(scheduleForm.start_time,scheduleForm.end_time):2))}</span>
+                    </> : <>
+                      <span>Jika 3 Peserta</span><span className="colon">:</span><span className="value">{rupiah((Number(scheduleForm.coach_rate)+Number(scheduleForm.rental_rate_per_hour)*([1,2,3].includes(durasiJam(scheduleForm.start_time,scheduleForm.end_time))?durasiJam(scheduleForm.start_time,scheduleForm.end_time):2))/3)} / orang</span>
+                      <span>Jika 4 Peserta</span><span className="colon">:</span><span className="value">{rupiah((Number(scheduleForm.coach_rate)+Number(scheduleForm.rental_rate_per_hour)*([1,2,3].includes(durasiJam(scheduleForm.start_time,scheduleForm.end_time))?durasiJam(scheduleForm.start_time,scheduleForm.end_time):2))/4)} / orang</span>
+                    </>}
                   </div>
                 </div>
-                <div className="form-group">
-                  <label>Sewa Lapangan per Jam</label>
-                  <div style={{display:"flex",alignItems:"center",gap:6}}>
-                    <strong>Rp</strong>
-                    <input inputMode="numeric" value={angkaRupiah(scheduleForm.rental_rate_per_hour)} onChange={e=>setScheduleForm(p=>({...p,rental_rate_per_hour:bacaRupiah(e.target.value)}))}/>
-                    <strong>,-</strong>
-                  </div>
-                </div>
-                <p>Durasi: <strong>{([1,2,3].includes(durasiJam(scheduleForm.start_time,scheduleForm.end_time))?durasiJam(scheduleForm.start_time,scheduleForm.end_time):2).toLocaleString("id-ID")} jam</strong> (sesuai pilihan durasi).</p>
-                <p>Sewa total: <strong>{rupiah(scheduleForm.rental_rate_per_hour * ([1,2,3].includes(durasiJam(scheduleForm.start_time,scheduleForm.end_time))?durasiJam(scheduleForm.start_time,scheduleForm.end_time):2))}</strong></p>
-                <p>Total sesi: <strong>{rupiah(Number(scheduleForm.coach_rate) + Number(scheduleForm.rental_rate_per_hour)*([1,2,3].includes(durasiJam(scheduleForm.start_time,scheduleForm.end_time))?durasiJam(scheduleForm.start_time,scheduleForm.end_time):2))}</strong></p>
-                {scheduleForm.type==="Private"
-                  ? <p>Private (1 orang): <strong>{rupiah(Number(scheduleForm.coach_rate)+Number(scheduleForm.rental_rate_per_hour)*([1,2,3].includes(durasiJam(scheduleForm.start_time,scheduleForm.end_time))?durasiJam(scheduleForm.start_time,scheduleForm.end_time):2))}</strong></p>
-                  : <div><p>Jika 3 peserta: <strong>{rupiah((Number(scheduleForm.coach_rate)+Number(scheduleForm.rental_rate_per_hour)*([1,2,3].includes(durasiJam(scheduleForm.start_time,scheduleForm.end_time))?durasiJam(scheduleForm.start_time,scheduleForm.end_time):2))/3)}</strong> / orang</p>
-                    <p>Jika 4 peserta: <strong>{rupiah((Number(scheduleForm.coach_rate)+Number(scheduleForm.rental_rate_per_hour)*([1,2,3].includes(durasiJam(scheduleForm.start_time,scheduleForm.end_time))?durasiJam(scheduleForm.start_time,scheduleForm.end_time):2))/4)}</strong> / orang</p></div>}
               </div>
 
-              <label style={{display:"flex",gap:8,marginBottom:7}}><input type="checkbox" checked={scheduleForm.is_active} onChange={e=>setScheduleForm(p=>({...p,is_active:e.target.checked}))}/> Jadwal Aktif</label>
+              <label className="schedule-active-row" style={{display:"flex",gap:8,marginBottom:7}}><input type="checkbox" checked={scheduleForm.is_active} onChange={e=>setScheduleForm(p=>({...p,is_active:e.target.checked}))}/> Jadwal Aktif</label>
 
               <button className="register-submit" type="submit" disabled={savingSchedule}>{savingSchedule ? "Menyimpan..." : editId ? "Simpan Perubahan" : "Tambah Jadwal"}</button>
 
               {editId && <button type="button" className="back-button" onClick={()=>{setEditId(null);setScheduleForm({...emptySchedule});}}>Batal Edit</button>}
 
             </form>
+            </div>)}
 
+            {coachMenu==="participants" && (<>
                           <section style={{margin:"12px 0",padding:12,background:"rgba(255,255,255,.82)",borderRadius:12,border:"1px solid #b9d0da"}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,flexWrap:"wrap"}}>
                   <h3 style={{margin:0}}>Daftar Peserta</h3>
@@ -1570,6 +1796,9 @@ const formattedSchedules = await Promise.all(
                 <p style={{fontSize:12,color:"#64748b"}}>Tagihan Grup muncul saat 3 peserta dan dihitung ulang otomatis jika menjadi 4. Pembayaran yang sudah diterima tidak hilang; kelebihan pembayaran ditampilkan di kolom tagihan.</p>
                 <p style={{fontSize:12,color:"#64748b"}}>Pada layar kecil, geser tabel ke samping untuk melihat seluruh kolom.</p>
               </section>
+            </>)}
+
+            {coachMenu==="private" && (<>
               <section style={{marginTop:16,background:"#fff",border:"1px solid #d7e3e8",borderRadius:12,padding:12}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:8,flexWrap:"wrap"}}>
                   <h3 style={{margin:0}}>💬 Pengajuan Private</h3>
@@ -1603,7 +1832,53 @@ const formattedSchedules = await Promise.all(
                   </div>
                 </div>}
               </section>
+            </>)}
 
+            {coachMenu==="news" && (<>
+              <section style={{margin:"14px 0",padding:12,background:"rgba(255,255,255,.84)",border:"1px solid #b9d0da",borderRadius:12}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+                  <h3 style={{margin:0}}>📰 Kelola Berita Tenis Meja</h3>
+                  <button type="button" onClick={loadNews} style={{border:"1px solid #9fb8c2",background:"#fff",borderRadius:8,padding:"6px 10px",cursor:"pointer"}}>↻ Refresh</button>
+                </div>
+
+                <form onSubmit={saveNews} style={{marginTop:10,padding:10,borderRadius:10,background:"#edf5f7"}}>
+                  <div className="form-group"><label>Judul Berita</label><input value={newsForm.title} onChange={e=>setNewsForm(p=>({...p,title:e.target.value}))} placeholder="Contoh: Turnamen Tenis Meja JIEP Sports" required /></div>
+                  <div className="form-group"><label>Kategori</label><input value={newsForm.category} onChange={e=>setNewsForm(p=>({...p,category:e.target.value}))} placeholder="Berita Tenis Meja" /></div>
+                  <div className="form-group">
+                    <label>Foto Berita (opsional)</label>
+                    <input type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0]; if(f) uploadNewsImage(f); e.target.value="";}} />
+                    <p style={{fontSize:11,color:"#607d8b",margin:"4px 0"}}>{uploadingNewsImage ? "⏳ Mengupload foto..." : "Pilih foto dari HP atau laptop. Maksimal 8 MB."}</p>
+                    {newsForm.image_url && <div style={{marginTop:7}}>
+                      <img src={newsForm.image_url} alt="Preview berita" style={{width:"100%",maxWidth:320,maxHeight:190,objectFit:"cover",borderRadius:9,border:"1px solid #c7d7de"}} />
+                      <div><button type="button" onClick={()=>setNewsForm(p=>({...p,image_url:""}))} style={{marginTop:5,border:"1px solid #e6a5a5",background:"#fff5f5",color:"#b42318",borderRadius:7,padding:"5px 9px",cursor:"pointer"}}>Hapus Foto dari Berita</button></div>
+                    </div>}
+                  </div>
+                  <div className="form-group"><label>Isi Berita</label><textarea value={newsForm.content} onChange={e=>setNewsForm(p=>({...p,content:e.target.value}))} rows="5" required style={{width:"100%",boxSizing:"border-box",padding:9,border:"1px solid #b7cbd3",borderRadius:8,resize:"vertical"}} /></div>
+                  <label style={{display:"flex",alignItems:"center",gap:7,fontSize:12,margin:"7px 0"}}><input type="checkbox" checked={newsForm.is_published} onChange={e=>setNewsForm(p=>({...p,is_published:e.target.checked}))}/> Tampilkan ke publik</label>
+                  <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>
+                    <button type="submit" className="register-submit" disabled={savingNews || uploadingNewsImage} style={{width:"auto"}}>{uploadingNewsImage ? "Upload Foto..." : savingNews ? "Menyimpan..." : editNewsId ? "Simpan Perubahan" : "Terbitkan Berita"}</button>
+                    {editNewsId && <button type="button" onClick={()=>{setEditNewsId(null);setNewsForm({title:"",category:"Berita Tenis Meja",image_url:"",content:"",is_published:true});}} style={{border:"1px solid #9fb8c2",background:"#fff",borderRadius:8,padding:"7px 11px",cursor:"pointer"}}>Batal Edit</button>}
+                  </div>
+                </form>
+
+                <div style={{marginTop:10,display:"grid",gap:7}}>
+                  {loadingNews ? <div style={{fontSize:12,color:"#607d8b"}}>Memuat berita...</div> :
+                   newsList.length===0 ? <div style={{fontSize:12,color:"#607d8b"}}>Belum ada berita.</div> :
+                   newsList.map(n=><div key={n.id} style={{padding:9,border:"1px solid #c9d9df",borderRadius:9,background:"#fff",display:"flex",justifyContent:"space-between",gap:10,alignItems:"center"}}>
+                     <div style={{minWidth:0}}>
+                       <div style={{fontSize:10,color:"#087b72",fontWeight:800}}>{n.category || "Berita Tenis Meja"} • {n.is_published===false ? "Draft" : "Tayang"}</div>
+                       <strong style={{fontSize:12,color:"#073b55"}}>{n.title}</strong>
+                     </div>
+                     <div style={{display:"flex",gap:5,flexShrink:0}}>
+                       <button type="button" onClick={()=>editNews(n)} style={{border:"1px solid #9fb8c2",background:"#fff",borderRadius:7,padding:"5px 8px",fontSize:10,cursor:"pointer"}}>Edit</button>
+                       <button type="button" onClick={()=>deleteNews(n)} style={{border:"1px solid #e6a5a5",background:"#fff5f5",color:"#b42318",borderRadius:7,padding:"5px 8px",fontSize:10,cursor:"pointer"}}>Hapus</button>
+                     </div>
+                   </div>)}
+                </div>
+              </section>
+            </>)}
+
+            {coachMenu==="scheduleList" && (<>
               <h3 style={{marginTop:12}}>Daftar Jadwal</h3>
               <div style={{overflowX:"auto",maxHeight:430,overflowY:"auto",border:"1px solid #dbe5ed",borderRadius:10,marginTop:6}}>
                 <table style={{width:"100%",minWidth:1040,borderCollapse:"collapse",tableLayout:"fixed",fontSize:12.5,textAlign:"left"}}>
@@ -1666,6 +1941,7 @@ const formattedSchedules = await Promise.all(
                 </table>
               </div>
               <p style={{fontSize:12,color:"#64748b"}}>Klik baris jadwal untuk membuka popup peserta: Nama | Level | Lunas / Belum Lunas. Nominal pembayaran tidak ditampilkan di Daftar Jadwal.</p>
+            </>)}
 
           </>}
 
@@ -2780,6 +3056,48 @@ const formattedSchedules = await Promise.all(
         </main>
       )}
 
+      {page === "news" && (
+        <main style={{background:"linear-gradient(180deg,#dbe8ed,#eef4f6,#d4e4ea)",minHeight:"75vh",padding:"14px 10px 24px"}}>
+          <div style={{maxWidth:900,margin:"0 auto"}}>
+            <button className="back-button" onClick={()=>{setSelectedNews(null);setPage("home");}}>← Home</button>
+            <div style={{textAlign:"center",margin:"7px 0 14px"}}>
+              <div style={{fontSize:30}}>📰</div>
+              <h2 style={{margin:"2px 0",color:"#073b55"}}>Berita Tenis Meja</h2>
+              <p style={{fontSize:12,color:"#607d8b",margin:0}}>Informasi, kegiatan, turnamen dan kabar tenis meja.</p>
+            </div>
+
+            {selectedNews ? (
+              <article style={{background:"#fff",border:"1px solid #bfd3dc",borderRadius:15,overflow:"hidden",boxShadow:"0 7px 20px rgba(20,55,75,.10)"}}>
+                {selectedNews.image_url && <img src={selectedNews.image_url} alt={selectedNews.title} style={{display:"block",width:"100%",maxHeight:430,objectFit:"cover"}} onError={e=>{e.currentTarget.style.display="none";}} />}
+                <div style={{padding:"16px 15px 20px"}}>
+                  <button type="button" onClick={()=>setSelectedNews(null)} style={{border:0,background:"transparent",color:"#087b72",fontWeight:800,padding:0,cursor:"pointer"}}>← Daftar Berita</button>
+                  <div style={{fontSize:10,fontWeight:900,color:"#087b72",marginTop:12}}>{selectedNews.category || "Berita Tenis Meja"}</div>
+                  <h2 style={{color:"#073b55",margin:"5px 0 4px",lineHeight:1.2}}>{selectedNews.title}</h2>
+                  <div style={{fontSize:10,color:"#78909c",marginBottom:13}}>{selectedNews.published_at ? new Date(selectedNews.published_at).toLocaleString("id-ID",{day:"2-digit",month:"long",year:"numeric",hour:"2-digit",minute:"2-digit"}) : ""}</div>
+                  <div style={{fontSize:14,color:"#243b4a",lineHeight:1.65,whiteSpace:"pre-wrap",textAlign:"left"}}>{selectedNews.content}</div>
+                </div>
+              </article>
+            ) : loadingNews ? (
+              <div style={{textAlign:"center",padding:30,color:"#607d8b"}}>⏳ Memuat berita...</div>
+            ) : newsList.length===0 ? (
+              <section style={{background:"#fff",border:"1px solid #bfd3dc",borderRadius:14,padding:28,textAlign:"center",color:"#64748b"}}>Belum ada berita yang diterbitkan.</section>
+            ) : (
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(250px,1fr))",gap:12}}>
+                {newsList.map(n=><article key={n.id} onClick={()=>{setSelectedNews(n);window.scrollTo(0,0);}} style={{background:"#fff",border:"1px solid #bfd3dc",borderRadius:14,overflow:"hidden",boxShadow:"0 6px 17px rgba(20,55,75,.08)",cursor:"pointer"}}>
+                  {n.image_url ? <img src={n.image_url} alt="" style={{display:"block",width:"100%",height:150,objectFit:"cover"}} onError={e=>{e.currentTarget.style.display="none";}} /> : <div style={{height:90,display:"flex",alignItems:"center",justifyContent:"center",fontSize:36,background:"linear-gradient(135deg,#0b6681,#073b55)"}}>🏓</div>}
+                  <div style={{padding:12}}>
+                    <div style={{fontSize:10,fontWeight:900,color:"#087b72"}}>{n.category || "Berita Tenis Meja"}</div>
+                    <h3 style={{fontSize:15,margin:"4px 0",color:"#073b55",lineHeight:1.25}}>{n.title}</h3>
+                    <p style={{fontSize:11,color:"#64748b",margin:"5px 0",lineHeight:1.45}}>{String(n.content||"").slice(0,120)}{String(n.content||"").length>120?"...":""}</p>
+                    <div style={{fontSize:10,fontWeight:800,color:"#087b72"}}>Baca selengkapnya →</div>
+                  </div>
+                </article>)}
+              </div>
+            )}
+          </div>
+        </main>
+      )}
+
       {page === "chat" && (
         <main style={{background:"linear-gradient(180deg,#dbe8ed,#eef4f6,#d4e4ea)",minHeight:"75vh",padding:"14px 10px 22px"}}>
           <div style={{maxWidth:720,margin:"0 auto"}}>
@@ -2831,10 +3149,10 @@ const formattedSchedules = await Promise.all(
         </main>
       )}
 
-      {["home","pendaftaran","jadwal","pembayaran","program","progress","video","chat"].includes(page) && (
-        <nav className="bottom-nav" style={{position:"relative",zIndex:20,background:"#003a61",color:"#fff",display:"grid",gridTemplateColumns:"repeat(6,1fr)",padding:"9px 2px 8px",boxShadow:"0 -4px 18px rgba(0,0,0,.15)"}}>
+      {["home","pendaftaran","jadwal","pembayaran","program","progress","video","news","chat"].includes(page) && (
+        <nav className="bottom-nav" style={{position:"relative",zIndex:20,background:"#003a61",color:"#fff",display:"grid",gridTemplateColumns:"repeat(7,1fr)",padding:"9px 2px 8px",boxShadow:"0 -4px 18px rgba(0,0,0,.15)"}}>
           {[
-            ["home","⌂","Home"],["progress","📈","Progress"],["video","▶️","Video"],["sk","S&K","S&K"],["program","🏓","Program"],["chat","💬","Chat Public"]
+            ["home","⌂","Home"],["progress","📈","Progress"],["video","▶️","Video"],["sk","S&K","S&K"],["program","🏓","Program"],["news","📰","Berita"],["chat","💬","Chat"]
           ].map(([key,ic,label])=><button key={key} type="button" onClick={()=>key === "sk" ? setShowTerms(true) : setPage(key)}
             style={{border:0,background:"transparent",color:page===key?"#24b6ff":"#fff",padding:"4px 1px",fontSize:10,cursor:"pointer",position:"relative"}}>
             {key === "sk" ? (
@@ -3854,7 +4172,7 @@ const formattedSchedules = await Promise.all(
 
 
 
-      <footer className="qr-footer-bottom" style={{padding:"42px 12px 2px",minHeight:"auto",height:"auto",background:"#061a3a",margin:0}}>
+      <footer className="qr-footer-bottom" style={{position:"relative",padding:"42px 12px 2px",minHeight:"auto",height:"auto",background:"#061a3a",margin:0}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,lineHeight:1.15}}>
           <button
             type="button"
@@ -3873,6 +4191,18 @@ const formattedSchedules = await Promise.all(
             <strong style={{margin:0}}>PINGPONG TRAINING</strong>
             <span style={{margin:0}}>Table Tennis Training Center</span>
             <span style={{fontSize:10,opacity:.8}}>Klik QR untuk memperbesar</span>
+            <span style={{
+              position:"absolute",
+              left:10,
+              bottom:6,
+              fontSize:11,
+              fontWeight:400,
+              color:"#ffffff",
+              opacity:.95,
+              textAlign:"left",
+              textShadow:"0 1px 3px rgba(0,0,0,.65)",
+              whiteSpace:"nowrap"
+            }}>👁 Pengunjung: {visitorCount.toLocaleString("id-ID")}</span>
           </div>
         </div>
       </footer>
