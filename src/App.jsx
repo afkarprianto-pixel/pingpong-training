@@ -1213,10 +1213,24 @@ const formattedSchedules = await Promise.all(
         .clickable-schedule-row:hover > td:first-child {
           box-shadow:inset 5px 0 0 #08799a !important;
         }
-
-        /* Hanya warna area kosong di bawah aplikasi; layout tidak digeser */
-        html, body, #root {
-          background-color: #061a3a;
+        /* HOME mobile: penyesuaian visual sesuai mockup terbaru */
+        @media (max-width: 600px) {
+          .topbar {
+            padding-top: 8px !important;
+            padding-bottom: 7px !important;
+          }
+          .hero {
+            background-position: center 58% !important;
+          }
+          footer {
+            min-height: 0 !important;
+            height: auto !important;
+            margin-bottom: 0 !important;
+            padding-bottom: 14px !important;
+          }
+          html, body, #root {
+            margin-bottom: 0 !important;
+          }
         }
       `}</style>
 
