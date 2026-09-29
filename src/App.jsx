@@ -1486,7 +1486,7 @@ const formattedSchedules = await Promise.all(
           /* KHUSUS QR + PINGPONG TRAINING:
              turunkan mendekati batas bawah layar HP */
           .app > footer.qr-footer-bottom {
-            padding-top: 42px !important;
+            padding-top: 2px !important;
             padding-bottom: 2px !important;
             margin: 0 !important;
             min-height: 0 !important;
@@ -1498,6 +1498,670 @@ const formattedSchedules = await Promise.all(
             transform: translateY(0) !important;
           }
         }
+
+        /* =========================================================
+           HOME SUPER COMPACT - HP + DESKTOP
+           Target: dashboard muat satu layar tanpa scrollbar pada
+           layar normal, foto kegiatan tetap terlihat, padding tetap ada.
+        ========================================================= */
+        .header {
+          min-height: 44px !important;
+          height: 44px !important;
+          padding: 3px clamp(10px,2vw,20px) !important;
+        }
+        .header .brand img {
+          max-height: 34px !important;
+        }
+        .login-btn {
+          padding-top: 7px !important;
+          padding-bottom: 7px !important;
+        }
+
+        .hero {
+          min-height: 0 !important;
+          height: clamp(245px, 34vh, 330px) !important;
+          padding-top: 8px !important;
+          padding-bottom: 8px !important;
+          background-position: center 60% !important;
+        }
+        .hero-content {
+          padding-top: 0 !important;
+        }
+        .hero-description {
+          margin-top: 7px !important;
+        }
+
+        .quick-actions {
+          padding-top: 10px !important;
+          padding-bottom: 7px !important;
+        }
+        .quick-actions > div {
+          gap: 8px !important;
+        }
+        .quick-actions button {
+          min-height: 58px !important;
+          padding-top: 5px !important;
+          padding-bottom: 5px !important;
+        }
+
+        .bottom-nav {
+          margin: 0 !important;
+          min-height: 52px !important;
+          padding: 4px 2px 3px !important;
+        }
+        .bottom-nav button {
+          padding-top: 2px !important;
+          padding-bottom: 2px !important;
+        }
+
+        /* Data pengunjung dibuat rapat, tidak membuat ruang biru tinggi */
+        .home-visitor-compact {
+          padding: 4px 10px 2px !important;
+          min-height: 20px !important;
+          margin: 0 !important;
+        }
+
+        /* Footer QR dinaikkan dan dirapatkan, tetapi masih punya padding */
+        .app > footer.qr-footer-bottom {
+          padding: 5px 12px 7px !important;
+          margin: 0 !important;
+          min-height: 0 !important;
+          height: auto !important;
+        }
+        .app > footer.qr-footer-bottom > div {
+          margin: 0 auto !important;
+          padding: 0 !important;
+          transform: none !important;
+        }
+
+        @media (max-width: 600px) {
+          .header {
+            min-height: 42px !important;
+            height: 42px !important;
+            padding-top: 2px !important;
+            padding-bottom: 2px !important;
+          }
+          .header .brand img {
+            max-height: 32px !important;
+          }
+
+          .hero {
+            height: clamp(300px, 45vh, 390px) !important;
+            min-height: 0 !important;
+            padding: 7px 10px 8px !important;
+            background-position: center 72% !important;
+          }
+          .hero-content {
+            transform: none !important;
+            padding-top: 0 !important;
+          }
+          .hero-content h2 {
+            margin-top: 5px !important;
+            margin-bottom: 4px !important;
+          }
+          .hero-description {
+            margin-top: 7px !important;
+            line-height: 1.35 !important;
+          }
+
+          .quick-actions {
+            padding: 8px 10px 6px !important;
+          }
+          .quick-actions > div {
+            gap: 7px !important;
+          }
+          .quick-actions button {
+            min-height: 56px !important;
+            padding: 4px 4px !important;
+          }
+
+          .bottom-nav {
+            min-height: 50px !important;
+            padding: 3px 1px 2px !important;
+          }
+          .home-visitor-compact {
+            padding: 3px 9px 1px !important;
+            min-height: 18px !important;
+          }
+          .app > footer.qr-footer-bottom {
+            padding-top: 4px !important;
+            padding-bottom: 6px !important;
+          }
+        }
+
+        /* Desktop pendek seperti laptop 1366x768: prioritaskan muat satu layar */
+        @media (min-width: 601px) and (max-height: 820px) {
+          .hero {
+            height: 330px !important;
+            min-height: 0 !important;
+          }
+          .quick-actions {
+            padding-top: 8px !important;
+            padding-bottom: 5px !important;
+          }
+          .quick-actions button {
+            min-height: 54px !important;
+          }
+          .bottom-nav {
+            min-height: 48px !important;
+            padding-top: 2px !important;
+            padding-bottom: 2px !important;
+          }
+          .app > footer.qr-footer-bottom {
+            padding-top: 3px !important;
+            padding-bottom: 4px !important;
+          }
+        }
+
+
+        /* HOME MODERN COMPACT: menu dipindah ke area bawah foto */
+        .home-modern-actions{
+          background:#075f86 !important;
+          padding:8px 12px 7px !important;
+          margin:0 !important;
+        }
+        .home-modern-actions-grid{
+          max-width:1050px;margin:0 auto;display:grid;
+          grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;
+        }
+        .home-modern-action{
+          min-height:58px !important;border-radius:13px;border:1px solid rgba(210,246,250,.42);
+          color:#fff;cursor:pointer;display:flex !important;flex-direction:row !important;
+          align-items:center !important;justify-content:flex-start !important;text-align:left;
+          gap:14px;padding:7px 18px !important;box-shadow:0 5px 14px rgba(0,35,55,.16);
+        }
+        .home-modern-action.blue{background:linear-gradient(145deg,#0878a5,#064e70);}
+        .home-modern-action.green{background:linear-gradient(145deg,#0b958a,#06656d);}
+        .home-modern-action-icon{
+          width:42px;min-width:42px;height:42px;display:grid;place-items:center;
+          font-size:32px;line-height:1;
+        }
+        .home-modern-action-copy{display:flex;flex-direction:column;line-height:1.15;}
+        .home-modern-action-copy strong{font-size:16px;}
+        .home-modern-action-copy small{font-size:11px;margin-top:3px;opacity:.92;}
+
+        .home-footer-modern{
+          position:relative !important;background:#061a3a !important;
+          margin:0 !important;padding:6px 12px 8px !important;min-height:0 !important;height:auto !important;
+        }
+        .home-footer-inner{
+          max-width:760px;margin:0 auto !important;padding:0 !important;
+          display:flex;align-items:center;justify-content:center;gap:10px;line-height:1.15;
+        }
+        .home-footer-qr-btn{border:0;background:transparent;padding:0;cursor:pointer;display:flex;align-items:center;}
+        .home-footer-modern .footer-qr{
+          width:52px !important;height:52px !important;max-width:52px !important;max-height:52px !important;
+          object-fit:contain;border-radius:7px;background:#fff;padding:2px !important;
+        }
+        .home-footer-brand{display:flex;flex-direction:column;align-items:flex-start;gap:2px;white-space:nowrap;}
+        .home-footer-brand strong{font-size:14px;color:#20dca0;}
+        .home-footer-brand span{font-size:10px;color:#d9e5ee;}
+        .home-footer-brand small{font-size:9px;color:#94a7b7;}
+        .home-footer-contact{
+          margin-left:18px;padding-left:18px;border-left:1px solid rgba(255,255,255,.18);
+          display:flex;align-items:center;gap:9px;color:#fff;
+        }
+        .home-footer-phone-icon{
+          width:38px;height:38px;border-radius:50%;display:grid;place-items:center;
+          background:#16c968;font-size:22px;color:#fff;
+        }
+        .home-footer-contact > span:last-child{display:flex;flex-direction:column;}
+        .home-footer-contact small{font-size:9px;color:#d6e3ea;}
+        .home-footer-contact strong{font-size:16px;color:#ffeb3b;white-space:nowrap;}
+
+        @media(max-width:600px){
+          .home-modern-actions{padding:7px 9px 6px !important;}
+          .home-modern-actions-grid{gap:7px;}
+          .home-modern-action{min-height:55px !important;padding:6px 8px !important;gap:7px;border-radius:11px;}
+          .home-modern-action-icon{width:32px;min-width:32px;height:32px;font-size:25px;}
+          .home-modern-action-copy strong{font-size:12px;}
+          .home-modern-action-copy small{font-size:9px;margin-top:2px;}
+          .home-footer-modern{padding:5px 7px 7px !important;}
+          .home-footer-inner{max-width:100%;gap:6px;justify-content:center;}
+          .home-footer-modern .footer-qr{width:44px !important;height:44px !important;max-width:44px !important;max-height:44px !important;}
+          .home-footer-brand strong{font-size:11px;}
+          .home-footer-brand span{font-size:8px;}
+          .home-footer-brand small{font-size:8px;}
+          .home-footer-contact{margin-left:5px;padding-left:6px;gap:5px;}
+          .home-footer-phone-icon{width:30px;height:30px;font-size:17px;}
+          .home-footer-contact small{font-size:7px;}
+          .home-footer-contact strong{font-size:11px;}
+        }
+
+
+        /* =========================================================
+           FINAL HOME: FOTO LEBIH FULL + MENU TURUN + WA HANYA FOOTER
+        ========================================================= */
+
+        /* Foto kegiatan ditarik lebih panjang ke bawah */
+        .hero{
+          height:clamp(315px, 48vh, 390px) !important;
+          min-height:315px !important;
+          background-position:center 48% !important;
+          padding-top:8px !important;
+          padding-bottom:8px !important;
+        }
+
+        /* Empat tombol berada pada area bawah yang compact */
+        .home-modern-actions{
+          background:linear-gradient(180deg,#08658c 0%,#075a82 100%) !important;
+          padding:8px 12px 7px !important;
+          margin:0 !important;
+        }
+        .home-modern-actions-grid{
+          max-width:1050px !important;
+          margin:0 auto !important;
+          gap:8px !important;
+        }
+        .home-modern-action{
+          min-height:52px !important;
+          padding:5px 16px !important;
+        }
+        .home-modern-action-icon{
+          width:40px !important;
+          min-width:40px !important;
+          height:40px !important;
+          font-size:30px !important;
+        }
+
+        /* Nav langsung mengikuti menu, tanpa blok WA tengah */
+        .bottom-nav{
+          margin:0 !important;
+          min-height:48px !important;
+          padding:3px 2px 2px !important;
+        }
+
+        .home-visitor-compact{
+          padding:3px 10px 2px !important;
+          min-height:18px !important;
+        }
+
+        /* Footer akhir: QR + brand + WA */
+        .home-footer-modern{
+          padding:5px 12px 7px !important;
+        }
+
+        @media(max-width:600px){
+          /* HP: beri ruang vertikal foto agar kepala pelatih & aktivitas terlihat */
+          .hero{
+            height:clamp(345px, 51vh, 430px) !important;
+            min-height:345px !important;
+            background-position:center 55% !important;
+            padding-top:6px !important;
+            padding-bottom:7px !important;
+          }
+
+          .home-modern-actions{
+            padding:6px 8px 5px !important;
+          }
+          .home-modern-actions-grid{
+            grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+            gap:6px !important;
+          }
+          .home-modern-action{
+            min-height:50px !important;
+            padding:5px 7px !important;
+            gap:6px !important;
+          }
+          .home-modern-action-icon{
+            width:31px !important;
+            min-width:31px !important;
+            height:31px !important;
+            font-size:25px !important;
+          }
+          .home-modern-action-copy strong{font-size:11.5px !important;}
+          .home-modern-action-copy small{font-size:8.5px !important;}
+
+          .bottom-nav{
+            min-height:47px !important;
+            padding:2px 1px 2px !important;
+          }
+
+          .home-footer-modern{
+            padding:4px 6px 6px !important;
+          }
+        }
+
+        @media(min-width:601px) and (max-height:820px){
+          .hero{
+            height:335px !important;
+            min-height:335px !important;
+            background-position:center 48% !important;
+          }
+          .home-modern-actions{padding-top:6px !important;padding-bottom:5px !important;}
+          .home-modern-action{min-height:48px !important;}
+          .bottom-nav{min-height:45px !important;}
+          .home-footer-modern{padding-top:3px !important;padding-bottom:4px !important;}
+        }
+
+
+        /* FINAL: kurangi ruang kosong navy di bagian paling bawah */
+        .home-footer-modern{
+          padding-top:4px !important;
+          padding-bottom:2px !important;
+          min-height:0 !important;
+          height:auto !important;
+        }
+        .home-footer-inner{
+          margin-bottom:0 !important;
+          padding-bottom:0 !important;
+        }
+
+        @media(max-width:600px){
+          .home-footer-modern{
+            padding-top:3px !important;
+            padding-bottom:2px !important;
+          }
+        }
+
+        @media(min-width:601px) and (max-height:820px){
+          .home-footer-modern{
+            padding-top:3px !important;
+            padding-bottom:2px !important;
+          }
+        }
+
+
+        /* =========================================================
+           HOME PAS SATU LAYAR
+           Potong blok navy kosong di bawah, lalu distribusikan
+           tinggi Home agar seluruh konten turun mengisi layar.
+        ========================================================= */
+
+        /* Footer tidak lagi menyisakan blok tinggi sampai bawah */
+        .home-footer-modern{
+          flex:0 0 auto !important;
+          min-height:0 !important;
+          height:auto !important;
+          margin:0 !important;
+          padding:5px 10px 5px !important;
+        }
+        .home-footer-inner{
+          min-height:0 !important;
+          height:auto !important;
+          margin:0 auto !important;
+          padding:0 !important;
+        }
+
+        /* Home dibuat sebagai komposisi vertikal rapat */
+        .app{
+          min-height:100vh !important;
+        }
+
+        /* Desktop/laptop: gunakan tinggi viewport, bukan menambah navy kosong */
+        @media (min-width:601px){
+          .header{
+            height:68px !important;
+            min-height:68px !important;
+            padding:5px 16px !important;
+          }
+
+          .hero{
+            height:335px !important;
+            min-height:335px !important;
+            background-position:center 48% !important;
+          }
+
+          .home-modern-actions{
+            padding:6px 12px 5px !important;
+          }
+          .home-modern-action{
+            min-height:50px !important;
+          }
+
+          .bottom-nav{
+            min-height:49px !important;
+            height:49px !important;
+            padding:3px 2px 2px !important;
+          }
+
+          .home-visitor-compact{
+            min-height:18px !important;
+            height:18px !important;
+            padding:2px 10px 1px !important;
+          }
+
+          .home-footer-modern{
+            padding-top:5px !important;
+            padding-bottom:5px !important;
+          }
+        }
+
+        /* Laptop pendek 1366x768: komposisi dibuat pas layar */
+        @media (min-width:601px) and (max-height:820px){
+          .header{
+            height:68px !important;
+            min-height:68px !important;
+          }
+          .hero{
+            height:335px !important;
+            min-height:335px !important;
+          }
+          .home-modern-actions{
+            padding-top:5px !important;
+            padding-bottom:4px !important;
+          }
+          .home-modern-action{
+            min-height:48px !important;
+          }
+          .bottom-nav{
+            height:48px !important;
+            min-height:48px !important;
+          }
+          .home-footer-modern{
+            padding:4px 10px 4px !important;
+          }
+        }
+
+        /* HP: tetap compact, foto tetap dominan, tidak ada navy kosong besar */
+        @media (max-width:600px){
+          .header{
+            height:58px !important;
+            min-height:58px !important;
+            padding:4px 10px !important;
+          }
+
+          .hero{
+            height:clamp(335px,47vh,405px) !important;
+            min-height:335px !important;
+            background-position:center 55% !important;
+          }
+
+          .home-modern-actions{
+            padding:5px 8px 4px !important;
+          }
+          .home-modern-action{
+            min-height:48px !important;
+          }
+
+          .bottom-nav{
+            min-height:48px !important;
+            height:48px !important;
+            padding:2px 1px !important;
+          }
+
+          .home-visitor-compact{
+            min-height:17px !important;
+            height:17px !important;
+            padding:1px 8px !important;
+          }
+
+          .home-footer-modern{
+            margin:0 !important;
+            padding:4px 5px 5px !important;
+          }
+        }
+
+
+        /* FINAL TUNING: potong lagi ruang bawah Home */
+        .home-footer-modern{
+          padding-top:2px !important;
+          padding-bottom:0 !important;
+          margin-bottom:0 !important;
+          min-height:0 !important;
+          height:auto !important;
+        }
+        .home-footer-inner{
+          margin-top:0 !important;
+          margin-bottom:0 !important;
+          padding-top:0 !important;
+          padding-bottom:0 !important;
+        }
+
+        @media (min-width:601px){
+          .home-footer-modern{
+            padding-top:2px !important;
+            padding-bottom:0 !important;
+          }
+        }
+
+        @media (max-width:600px){
+          .home-footer-modern{
+            padding-top:2px !important;
+            padding-bottom:1px !important;
+          }
+        }
+
+
+        /* =========================================================
+           KUNCI BAGIAN BAWAH
+           Header dipendekkan, selisih tinggi diberikan ke HERO.
+           Footer / QR / WA / nav / visitor TIDAK DIUBAH.
+        ========================================================= */
+
+        @media (min-width:601px){
+          /* sebelumnya 68px -> 48px: hemat 20px */
+          .header{
+            height:48px !important;
+            min-height:48px !important;
+            padding:2px 14px !important;
+          }
+          .header .brand img{
+            max-height:36px !important;
+          }
+          .login-btn{
+            padding-top:6px !important;
+            padding-bottom:6px !important;
+          }
+
+          /* sebelumnya 335px -> 355px: tambah tepat 20px */
+          .hero{
+            height:355px !important;
+            min-height:355px !important;
+            background-position:center 48% !important;
+          }
+        }
+
+        @media (max-width:600px){
+          /* sebelumnya 58px -> 48px: hemat 10px */
+          .header{
+            height:48px !important;
+            min-height:48px !important;
+            padding:2px 9px !important;
+          }
+          .header .brand img{
+            max-height:34px !important;
+          }
+          .login-btn{
+            padding-top:6px !important;
+            padding-bottom:6px !important;
+          }
+
+          /* tambahkan 10px ke hero, bagian bawah tetap */
+          .hero{
+            height:calc(clamp(335px, 47vh, 405px) + 10px) !important;
+            min-height:345px !important;
+            background-position:center 55% !important;
+          }
+        }
+
+        @media (min-width:601px) and (max-height:820px){
+          /* tetap: header -20px, hero +20px */
+          .header{
+            height:48px !important;
+            min-height:48px !important;
+          }
+          .hero{
+            height:355px !important;
+            min-height:355px !important;
+          }
+        }
+
+
+        /* =========================================================
+           REVISI: 4 TOMBOL LEBIH PENDEK + FOOTER BAWAH DIPOTONG
+        ========================================================= */
+
+        /* Grup 4 tombol dipersempit dan dipusatkan */
+        .home-modern-actions-grid{
+          width:min(760px, 72vw) !important;
+          max-width:760px !important;
+          margin-left:auto !important;
+          margin-right:auto !important;
+          grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+          gap:8px !important;
+        }
+
+        .home-modern-action{
+          width:100% !important;
+          min-height:48px !important;
+          padding:5px 12px !important;
+        }
+
+        /* Potong ruang navy kosong di bawah QR/WA */
+        .home-footer-modern{
+          padding-top:2px !important;
+          padding-bottom:0 !important;
+          margin-bottom:0 !important;
+          min-height:0 !important;
+          height:auto !important;
+        }
+
+        .home-footer-inner{
+          margin-top:0 !important;
+          margin-bottom:0 !important;
+          padding-top:0 !important;
+          padding-bottom:0 !important;
+        }
+
+        /* Jangan biarkan app memaksa bidang navy sampai 100vh */
+        .app{
+          min-height:0 !important;
+        }
+
+        @media (min-width:601px){
+          .home-modern-actions{
+            padding-top:5px !important;
+            padding-bottom:4px !important;
+          }
+          .home-modern-actions-grid{
+            width:min(760px,72vw) !important;
+          }
+          .home-modern-action{
+            min-height:47px !important;
+          }
+          .home-footer-modern{
+            padding-bottom:0 !important;
+          }
+        }
+
+        @media (max-width:600px){
+          /* HP tetap 2 kolom, tetapi proporsional terhadap layar */
+          .home-modern-actions-grid{
+            width:94% !important;
+            max-width:94% !important;
+            gap:6px !important;
+          }
+          .home-modern-action{
+            min-height:47px !important;
+            padding:5px 7px !important;
+          }
+          .home-footer-modern{
+            padding-top:2px !important;
+            padding-bottom:0 !important;
+          }
+        }
+
       `}</style>
 
       {page === "admin" && (
@@ -1946,23 +2610,19 @@ const formattedSchedules = await Promise.all(
             </div>
           </section>
 
-          <section className="quick-actions" style={{background:"linear-gradient(180deg,#07506a 0%,#6f9caf 18%,#d8e1e6 48%,#c7d6de 62%,#4f8eaa 82%,#08608d 100%)",padding:"16px 12px 12px",marginTop:0}}>
-            <div style={{maxWidth:1050,margin:"0 auto",display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:7}}>
-              <button type="button" onClick={()=>setPage("pendaftaran")}
-                style={{border:0,borderRadius:11,padding:"6px 6px",background:"linear-gradient(145deg,rgba(8,111,158,.94),rgba(3,65,96,.92))",border:"1px solid rgba(210,240,246,.48)",boxShadow:"0 7px 16px rgba(0,35,55,.18),inset 0 1px 0 rgba(255,255,255,.16)",color:"#fff",cursor:"pointer"}}>
-                <div style={{fontSize:17}}>📝</div><strong style={{fontSize:12}}>Pendaftaran</strong><div style={{fontSize:9,marginTop:1}}>Daftar jadi peserta</div>
+          <section className="quick-actions home-modern-actions">
+            <div className="home-modern-actions-grid">
+              <button className="home-modern-action blue" type="button" onClick={()=>setPage("pendaftaran")}>
+                <span className="home-modern-action-icon">📝</span><span className="home-modern-action-copy"><strong>Pendaftaran</strong><small>Daftar jadi peserta</small></span>
               </button>
-              <button type="button" onClick={()=>setPage("jadwal")}
-                style={{border:0,borderRadius:11,padding:"6px 6px",background:"linear-gradient(145deg,rgba(8,142,132,.94),rgba(4,85,91,.92))",border:"1px solid rgba(210,246,240,.48)",boxShadow:"0 7px 16px rgba(0,35,55,.18),inset 0 1px 0 rgba(255,255,255,.16)",color:"#fff",cursor:"pointer"}}>
-                <div style={{fontSize:17}}>📅</div><strong style={{fontSize:12}}>Daftar Jadwal</strong><div style={{fontSize:9,marginTop:1}}>Lihat hari & jam</div>
+              <button className="home-modern-action green" type="button" onClick={()=>setPage("jadwal")}>
+                <span className="home-modern-action-icon">📅</span><span className="home-modern-action-copy"><strong>Daftar Jadwal</strong><small>Lihat hari & jam</small></span>
               </button>
-              <button type="button" onClick={()=>setPage("pembayaran")}
-                style={{border:0,borderRadius:11,padding:"6px 6px",background:"linear-gradient(145deg,rgba(16,104,142,.94),rgba(5,70,101,.92))",border:"1px solid rgba(210,240,246,.48)",boxShadow:"0 7px 16px rgba(0,35,55,.18),inset 0 1px 0 rgba(255,255,255,.16)",color:"#fff",cursor:"pointer"}}>
-                <div style={{fontSize:17}}>💳</div><strong style={{fontSize:12}}>Pembayaran</strong><div style={{fontSize:9,marginTop:1}}>Informasi pembayaran</div>
+              <button className="home-modern-action blue" type="button" onClick={()=>setPage("pembayaran")}>
+                <span className="home-modern-action-icon">💳</span><span className="home-modern-action-copy"><strong>Pembayaran</strong><small>Informasi pembayaran</small></span>
               </button>
-              <button type="button" onClick={()=>setPage("program")}
-                style={{border:0,borderRadius:11,padding:"6px 6px",background:"linear-gradient(145deg,rgba(10,127,122,.94),rgba(4,77,90,.92))",border:"1px solid rgba(210,246,240,.48)",boxShadow:"0 7px 16px rgba(0,35,55,.18),inset 0 1px 0 rgba(255,255,255,.16)",color:"#fff",cursor:"pointer"}}>
-                <div style={{fontSize:17}}>🏓</div><strong style={{fontSize:12}}>Program Latihan</strong><div style={{fontSize:9,marginTop:1}}>Private / Grup</div>
+              <button className="home-modern-action green" type="button" onClick={()=>setPage("program")}>
+                <span className="home-modern-action-icon">🏓</span><span className="home-modern-action-copy"><strong>Program Latihan</strong><small>Private / Grup</small></span>
               </button>
             </div>
           </section>
@@ -2591,15 +3251,6 @@ const formattedSchedules = await Promise.all(
               <p style={{marginBottom:0}}>Teknik Dasar • Spin & Topspin • Blok & Defense • Latihan Taktik • Private • Grup 3–4 Orang</p>
             </div>
           </section>
-          <footer style={{background:"linear-gradient(180deg,#08608d 0%,#07547e 48%,#043e63 100%)",color:"#fff",padding:"8px 16px 18px",textAlign:"center",marginTop:-1}}>
-            <div style={{maxWidth:1050,margin:"0 auto",display:"flex",justifyContent:"center",alignItems:"center",gap:10,flexWrap:"nowrap"}}>
-              <div className="home-contact-icon" aria-hidden="true" style={{width:54,height:54,borderRadius:"50%",background:"#22c55e",display:"flex",alignItems:"center",justifyContent:"center",fontSize:29,boxShadow:"0 5px 14px rgba(0,0,0,.18)"}}>☎</div>
-              <div style={{textAlign:"left",lineHeight:1.15}}>
-                <div style={{fontSize:10,opacity:.9}}>Informasi Pelatihan</div>
-                <strong style={{fontSize:"clamp(14px,3.7vw,18px)",color:"#ffe84a",whiteSpace:"nowrap"}}>0858-1446-6929</strong>
-              </div>
-            </div>
-          </footer>
         </>
 
       )}
@@ -3128,6 +3779,7 @@ const formattedSchedules = await Promise.all(
 
       {page === "home" && (
         <div
+          className="home-visitor-compact"
           style={{
             background:"#061a3a",
             color:"#ffffff",
@@ -4149,25 +4801,19 @@ const formattedSchedules = await Promise.all(
 
 
 
-      <footer className="qr-footer-bottom" style={{position:"relative",padding:"42px 12px 2px",minHeight:"auto",height:"auto",background:"#061a3a",margin:0}}>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,lineHeight:1.15}}>
-          <button
-            type="button"
-            title="Klik untuk memperbesar QR PINGPONG TRAINING"
-            aria-label="Perbesar QR PINGPONG TRAINING"
-            onClick={() => setShowQrPopup(true)}
-            style={{border:0,background:"transparent",padding:0,cursor:"pointer",display:"flex",alignItems:"center"}}
-          >
-            <img className="footer-qr"
-              src={qrPingpongTraining}
-              alt="QR PINGPONG TRAINING"
-              style={{width:54,height:54,objectFit:"contain",borderRadius:6,background:"#fff",padding:2}}
-            />
+      <footer className="qr-footer-bottom home-footer-modern">
+        <div className="home-footer-inner">
+          <button type="button" className="home-footer-qr-btn" title="Klik untuk memperbesar QR PINGPONG TRAINING" aria-label="Perbesar QR PINGPONG TRAINING" onClick={() => setShowQrPopup(true)}>
+            <img className="footer-qr" src={qrPingpongTraining} alt="QR PINGPONG TRAINING" />
           </button>
-          <div style={{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:3}}>
-            <strong style={{margin:0}}>PINGPONG TRAINING</strong>
-            <span style={{margin:0}}>Table Tennis Training Center</span>
-            <span style={{fontSize:10,opacity:.8}}>Klik QR untuk memperbesar</span>
+          <div className="home-footer-brand">
+            <strong>PINGPONG TRAINING</strong>
+            <span>Table Tennis Training Center</span>
+            <small>Klik QR untuk memperbesar</small>
+          </div>
+          <div className="home-footer-contact">
+            <span className="home-footer-phone-icon">☎</span>
+            <span><small>Informasi Pelatihan / WhatsApp</small><strong>0858-1446-6929</strong></span>
           </div>
         </div>
       </footer>
