@@ -1180,7 +1180,7 @@ const formattedSchedules = await Promise.all(
         html, body { width: 100%; min-width: 320px; margin: 0; padding: 0; }
         #root { width: 100% !important; max-width: none !important; min-width: 320px; margin: 0 !important; padding: 0 !important; }
         body { overflow-x: hidden; background: #061a3a; }
-        .app { width: 100%; max-width: none; min-height: 100vh; overflow-x: hidden; }
+        .app { width: 100%; max-width: none; min-height: 0; overflow-x: hidden; }
         .header { min-height: 58px !important; padding: 8px clamp(12px, 3vw, 28px) !important; gap: 12px; }
         .brand { min-width: 0; cursor: pointer; }
         .login-btn { flex: 0 0 auto; white-space: nowrap; }
@@ -1229,14 +1229,18 @@ const formattedSchedules = await Promise.all(
           .app > main:not(.registration-page):not(.success-page) { padding-left: 10px !important; padding-right: 10px !important; }
           footer { padding-top: 10px !important; padding-bottom: 12px !important; }
 
-          /* KHUSUS footer navy paling bawah yang berisi QR + 3 baris teks */
+          /* Footer QR paling bawah: tidak boleh punya ruang navy kosong di bawah */
           footer.qr-footer-final {
             min-height: 0 !important;
-            height: auto !important;
-            padding-top: 3px !important;
-            padding-bottom: 3px !important;
-            margin-top: 0 !important;
-            margin-bottom: 0 !important;
+            height: fit-content !important;
+            padding: 3px 12px !important;
+            margin: 0 !important;
+            line-height: 1 !important;
+          }
+          footer.qr-footer-final > div {
+            margin: 0 !important;
+            padding: 0 !important;
+            min-height: 0 !important;
           }
         }
       `}</style>
@@ -3588,7 +3592,7 @@ const formattedSchedules = await Promise.all(
 
 
 
-      <footer className="qr-footer-final" style={{padding:"4px 12px 3px",minHeight:0,height:"auto",background:"#061a3a",margin:0}}>
+      <footer className="qr-footer-final" style={{padding:"4px 12px",minHeight:0,height:"fit-content",background:"#061a3a",margin:0,lineHeight:1}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,lineHeight:1.15}}>
           <button
             type="button"
