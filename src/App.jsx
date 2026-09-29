@@ -55,6 +55,7 @@ function App() {
   const [editingChatText, setEditingChatText] = useState("");
   const [installPrompt, setInstallPrompt] = useState(null);
   const [showInstall, setShowInstall] = useState(false);
+  const [showQrPopup, setShowQrPopup] = useState(false);
   const [lastReadChatId, setLastReadChatId] = useState(() => Number(localStorage.getItem("pingtrn_last_read_chat_id") || 0));
 
   const [editId, setEditId] = useState(null);
@@ -2666,6 +2667,84 @@ const formattedSchedules = await Promise.all(
       )}
 
 
+      {showQrPopup && (
+        <div
+          onClick={() => setShowQrPopup(false)}
+          style={{
+            position:"fixed", inset:0, zIndex:10003,
+            background:"rgba(0,0,0,.68)",
+            display:"flex", alignItems:"center", justifyContent:"center",
+            padding:18
+          }}
+        >
+          <section
+            onClick={(e)=>e.stopPropagation()}
+            style={{
+              width:"min(92vw,360px)",
+              background:"#fff",
+              color:"#102a3a",
+              borderRadius:20,
+              padding:"18px 16px 14px",
+              textAlign:"center",
+              boxShadow:"0 20px 60px rgba(0,0,0,.45)"
+            }}
+          >
+            <h2 style={{margin:"0 0 4px",fontSize:19}}>PINGPONG TRAINING</h2>
+            <div style={{fontSize:12,opacity:.72,marginBottom:12}}>Scan QR untuk membuka aplikasi</div>
+
+            <img
+              src={qrPingpongTraining}
+              alt="QR PINGPONG TRAINING besar"
+              style={{
+                width:"min(72vw,270px)",
+                height:"min(72vw,270px)",
+                objectFit:"contain",
+                display:"block",
+                margin:"0 auto",
+                background:"#fff",
+                padding:5,
+                borderRadius:10
+              }}
+            />
+
+            <div style={{fontSize:11,opacity:.7,marginTop:8}}>
+              Arahkan kamera HP lain ke QR di atas
+            </div>
+
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:12}}>
+              <button
+                type="button"
+                onClick={async ()=>{
+                  const link = "https://pingpong-training.vercel.app";
+                  try {
+                    await navigator.clipboard.writeText(link);
+                    alert("✓ Link berhasil disalin");
+                  } catch {
+                    window.prompt("Salin link PINGPONG TRAINING:", link);
+                  }
+                }}
+                style={{
+                  border:0,borderRadius:10,padding:"10px 8px",
+                  background:"#087b72",color:"#fff",fontWeight:900,cursor:"pointer"
+                }}
+              >
+                Salin Link
+              </button>
+              <button
+                type="button"
+                onClick={()=>setShowQrPopup(false)}
+                style={{
+                  border:"1px solid #b9c7cc",borderRadius:10,padding:"10px 8px",
+                  background:"#eef3f5",color:"#17394a",fontWeight:900,cursor:"pointer"
+                }}
+              >
+                Tutup
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
+
       {showInstall && installPrompt && (
         <div style={{position:"fixed",inset:0,zIndex:10001,background:"rgba(0,0,0,.48)",display:"flex",alignItems:"center",justifyContent:"center",padding:18}}>
           <section style={{width:"min(92vw,420px)",background:"linear-gradient(145deg,#eef4f6,#cbd9df)",color:"#102a3a",borderRadius:18,padding:18,boxShadow:"0 18px 55px rgba(0,0,0,.35)",textAlign:"center"}}>
@@ -3597,17 +3676,9 @@ const formattedSchedules = await Promise.all(
         <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,lineHeight:1.15}}>
           <button
             type="button"
-            title="Klik QR untuk menyalin link PINGPONG TRAINING"
-            aria-label="Salin link PINGPONG TRAINING"
-            onClick={async () => {
-              const link = "https://pingpong-training.vercel.app";
-              try {
-                await navigator.clipboard.writeText(link);
-                alert("✓ Link berhasil disalin");
-              } catch {
-                window.prompt("Salin link PINGPONG TRAINING:", link);
-              }
-            }}
+            title="Klik untuk memperbesar QR PINGPONG TRAINING"
+            aria-label="Perbesar QR PINGPONG TRAINING"
+            onClick={() => setShowQrPopup(true)}
             style={{border:0,background:"transparent",padding:0,cursor:"pointer",display:"flex",alignItems:"center"}}
           >
             <img className="footer-qr"
@@ -3619,7 +3690,7 @@ const formattedSchedules = await Promise.all(
           <div style={{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:3}}>
             <strong style={{margin:0}}>PINGPONG TRAINING</strong>
             <span style={{margin:0}}>Table Tennis Training Center</span>
-            <span style={{fontSize:10,opacity:.8}}>Klik QR untuk salin link</span>
+            <span style={{fontSize:10,opacity:.8}}>Klik QR untuk memperbesar</span>
           </div>
         </div>
       </footer>
