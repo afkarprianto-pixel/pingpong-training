@@ -1188,7 +1188,8 @@ const formattedSchedules = await Promise.all(
         .hero-content { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; }
         .hero-content h2 { max-width: 620px; text-wrap: balance; }
         .home-contact-icon { flex: 0 0 auto; }
-        .footer-qr { width: 54px !important; height: 54px !important; padding: 2px !important; }
+        .app footer .home-contact-icon { width: 48px !important; height: 48px !important; min-width: 48px !important; min-height: 48px !important; font-size: 24px !important; }
+        .app footer .footer-qr { width: 44px !important; height: 44px !important; max-width: 44px !important; max-height: 44px !important; padding: 1px !important; }
         .bottom-nav { padding: 5px 2px 4px !important; }
         .hero-description { position: static !important; width: min(100%, 560px) !important; margin: 12px auto 0 !important; text-align: center !important; font-size: clamp(11px, 2.3vw, 14px) !important; line-height: 1.45 !important; }
         .quick-actions { padding: 16px 12px 12px !important; margin-top: 0 !important; }
@@ -1216,12 +1217,12 @@ const formattedSchedules = await Promise.all(
         footer { overflow: hidden; }
         @media (max-width: 600px) {
           .header { min-height: 54px !important; padding-top: 6px !important; padding-bottom: 6px !important; }
-          .hero { height: 430px !important; min-height: 430px !important; background-position: center 64% !important; }
-          .hero-content { transform: translateY(-30px); }
+          .hero { height: 280px !important; min-height: 280px !important; background-position: center 64% !important; }
+          .hero-content { transform: none !important; padding-top: 4px; }
           .hero-content h2 { font-size: clamp(22px, 7vw, 30px) !important; line-height: 1.08 !important; margin: 7px 0 0 !important; }
           .hero-description { margin-top: 12px !important; }
-          .home-contact-icon { width: 68px !important; height: 68px !important; font-size: 34px !important; }
-          .footer-qr { width: 58px !important; height: 58px !important; }
+          .app footer .home-contact-icon { width: 48px !important; height: 48px !important; min-width: 48px !important; min-height: 48px !important; font-size: 24px !important; }
+          .app footer .footer-qr { width: 44px !important; height: 44px !important; max-width: 44px !important; max-height: 44px !important; }
           .quick-actions { padding-top: 12px !important; }
           .quick-actions > div { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 8px !important; }
           .quick-actions button { min-height: 66px; padding: 7px 5px !important; }
