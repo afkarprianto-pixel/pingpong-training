@@ -1229,21 +1229,19 @@ const formattedSchedules = await Promise.all(
           .app > main:not(.registration-page):not(.success-page) { padding-left: 10px !important; padding-right: 10px !important; }
           footer { padding-top: 10px !important; padding-bottom: 12px !important; }
 
-          /* Footer QR terakhir:
-             konten tetap/turun, yang dipotong hanya ruang navy di BAWAH */
-          .app > footer.qr-footer-final {
-            min-height: 0 !important;
-            height: auto !important;
-            max-height: none !important;
-            padding-top: 13px !important;
+          /* KHUSUS QR + PINGPONG TRAINING:
+             turunkan mendekati batas bawah layar HP */
+          .app > footer.qr-footer-bottom {
+            padding-top: 42px !important;
             padding-bottom: 2px !important;
             margin: 0 !important;
-            display: block !important;
-            overflow: hidden !important;
+            min-height: 0 !important;
+            height: auto !important;
           }
-          .app > footer.qr-footer-final > div {
+          .app > footer.qr-footer-bottom > div {
             margin: 0 !important;
             padding: 0 !important;
+            transform: translateY(0) !important;
           }
         }
       `}</style>
@@ -3595,7 +3593,7 @@ const formattedSchedules = await Promise.all(
 
 
 
-      <footer className="qr-footer-final" style={{padding:"13px 12px 2px",minHeight:0,height:"auto",background:"#061a3a",margin:0}}>
+      <footer className="qr-footer-bottom" style={{padding:"42px 12px 2px",minHeight:"auto",height:"auto",background:"#061a3a",margin:0}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,lineHeight:1.15}}>
           <button
             type="button"
