@@ -1236,6 +1236,9 @@ const formattedSchedules = await Promise.all(
           .app {
             background: #061a3a !important;
           }
+          /* HOME final contact/nav */
+          body, #root, .app { background:#061a3a !important; }
+
           /* HOME mobile terbaru: teks atas naik, foto turun, menu bawah lebih dekat WhatsApp */
           .hero {
             background-position: center 66% !important;
@@ -2200,10 +2203,10 @@ const formattedSchedules = await Promise.all(
           </section>
           <footer style={{background:"linear-gradient(180deg,#08608d 0%,#07547e 48%,#043e63 100%)",color:"#fff",padding:"8px 16px 18px",textAlign:"center",marginTop:-1}}>
             <div style={{maxWidth:1050,margin:"0 auto",display:"flex",justifyContent:"center",alignItems:"center",gap:10,flexWrap:"nowrap"}}>
-              <img src={pingpongTrainingLogo} alt="PINGPONG TRAINING" style={{width:72,maxHeight:34,objectFit:"contain",alignSelf:"flex-end"}}/>
+              <div aria-hidden="true" style={{width:54,height:54,borderRadius:"50%",background:"#22c55e",display:"flex",alignItems:"center",justifyContent:"center",fontSize:29,boxShadow:"0 5px 14px rgba(0,0,0,.18)"}}>☎</div>
               <div style={{textAlign:"left",lineHeight:1.15}}>
-                <div style={{fontSize:10,opacity:.9}}>Informasi & Pendaftaran</div>
-                <strong style={{fontSize:"clamp(14px,3.7vw,18px)",color:"#ffe84a",whiteSpace:"nowrap"}}>WhatsApp 0858-1446-6929</strong>
+                <div style={{fontSize:10,opacity:.9}}>Informasi Pelatihan</div>
+                <strong style={{fontSize:"clamp(14px,3.7vw,18px)",color:"#ffe84a",whiteSpace:"nowrap"}}>0858-1446-6929</strong>
               </div>
             </div>
           </footer>
@@ -2647,7 +2650,7 @@ const formattedSchedules = await Promise.all(
       )}
 
       {["home","pendaftaran","jadwal","pembayaran","program","progress","video","chat"].includes(page) && (
-        <nav style={{position:"sticky",bottom:0,zIndex:20,background:"#003a61",color:"#fff",display:"grid",gridTemplateColumns:"repeat(6,1fr)",padding:"9px 2px 8px",boxShadow:"0 -4px 18px rgba(0,0,0,.15)"}}>
+        <nav style={{position:"relative",zIndex:20,background:"#003a61",color:"#fff",display:"grid",gridTemplateColumns:"repeat(6,1fr)",padding:"9px 2px 8px",boxShadow:"0 -4px 18px rgba(0,0,0,.15)"}}>
           {[
             ["home","⌂","Home"],["progress","📈","Progress"],["video","▶️","Video"],["sk","S&K","S&K"],["program","🏓","Program"],["chat","💬","Chat Public"]
           ].map(([key,ic,label])=><button key={key} type="button" onClick={()=>key === "sk" ? setShowTerms(true) : setPage(key)}
