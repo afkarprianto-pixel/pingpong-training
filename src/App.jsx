@@ -2162,6 +2162,51 @@ const formattedSchedules = await Promise.all(
           }
         }
 
+
+        /* KHUSUS HP: hilangkan ruang bawah berlebih. Desktop tidak disentuh. */
+        @media (max-width:600px){
+          .app{
+            min-height:0 !important;
+            height:auto !important;
+          }
+          .bottom-nav{
+            grid-template-columns:repeat(6,1fr) !important;
+            height:auto !important;
+            min-height:0 !important;
+            padding-top:3px !important;
+            padding-bottom:3px !important;
+            margin:0 !important;
+          }
+          .bottom-nav button{
+            height:auto !important;
+            min-height:0 !important;
+            padding-top:3px !important;
+            padding-bottom:3px !important;
+          }
+          .home-visitor-compact{
+            height:auto !important;
+            min-height:0 !important;
+            margin:0 !important;
+            padding-top:2px !important;
+            padding-bottom:1px !important;
+          }
+          .home-footer-modern{
+            height:auto !important;
+            min-height:0 !important;
+            margin:0 !important;
+            padding-top:2px !important;
+            padding-bottom:0 !important;
+          }
+          .home-footer-inner{
+            height:auto !important;
+            min-height:0 !important;
+            margin-top:0 !important;
+            margin-bottom:0 !important;
+            padding-top:0 !important;
+            padding-bottom:0 !important;
+          }
+        }
+
       `}</style>
 
       {page === "admin" && (
@@ -3761,9 +3806,9 @@ const formattedSchedules = await Promise.all(
       )}
 
       {["home","pendaftaran","jadwal","pembayaran","program","progress","video","news","chat"].includes(page) && (
-        <nav className="bottom-nav" style={{position:"relative",zIndex:20,background:"#003a61",color:"#fff",display:"grid",gridTemplateColumns:"repeat(7,1fr)",padding:"9px 2px 8px",boxShadow:"0 -4px 18px rgba(0,0,0,.15)"}}>
+        <nav className="bottom-nav" style={{position:"relative",zIndex:20,background:"#003a61",color:"#fff",display:"grid",gridTemplateColumns:"repeat(6,1fr)",padding:"9px 2px 8px",boxShadow:"0 -4px 18px rgba(0,0,0,.15)"}}>
           {[
-            ["home","⌂","Home"],["progress","📈","Progress"],["video","▶️","Video"],["sk","S&K","S&K"],["program","🏓","Program"],["news","📰","Berita"],["chat","💬","Chat"]
+            ["home","⌂","Home"],["progress","📈","Progress"],["video","▶️","Video"],["sk","S&K","S&K"],["news","📰","Berita"],["chat","💬","Chat"]
           ].map(([key,ic,label])=><button key={key} type="button" onClick={()=>key === "sk" ? setShowTerms(true) : setPage(key)}
             style={{border:0,background:"transparent",color:page===key?"#24b6ff":"#fff",padding:"4px 1px",fontSize:10,cursor:"pointer",position:"relative"}}>
             {key === "sk" ? (
