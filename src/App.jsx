@@ -1187,6 +1187,9 @@ const formattedSchedules = await Promise.all(
         .hero { min-height: clamp(250px, 43vw, 330px) !important; padding: 16px clamp(12px, 4vw, 42px) 20px !important; background-position: center 58% !important; overflow: hidden; }
         .hero-content { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; }
         .hero-content h2 { max-width: 620px; text-wrap: balance; }
+        .home-contact-icon { flex: 0 0 auto; }
+        .footer-qr { width: 54px !important; height: 54px !important; padding: 2px !important; }
+        .bottom-nav { padding: 5px 2px 4px !important; }
         .hero-description { position: static !important; width: min(100%, 560px) !important; margin: 12px auto 0 !important; text-align: center !important; font-size: clamp(11px, 2.3vw, 14px) !important; line-height: 1.45 !important; }
         .quick-actions { padding: 16px 12px 12px !important; margin-top: 0 !important; }
         .quick-actions > div { gap: 10px !important; }
@@ -1213,9 +1216,12 @@ const formattedSchedules = await Promise.all(
         footer { overflow: hidden; }
         @media (max-width: 600px) {
           .header { min-height: 54px !important; padding-top: 6px !important; padding-bottom: 6px !important; }
-          .hero { min-height: 270px !important; background-position: center 64% !important; }
+          .hero { height: 430px !important; min-height: 430px !important; background-position: center 64% !important; }
+          .hero-content { transform: translateY(-30px); }
           .hero-content h2 { font-size: clamp(22px, 7vw, 30px) !important; line-height: 1.08 !important; margin: 7px 0 0 !important; }
-          .hero-description { margin-top: 14px !important; }
+          .hero-description { margin-top: 12px !important; }
+          .home-contact-icon { width: 68px !important; height: 68px !important; font-size: 34px !important; }
+          .footer-qr { width: 58px !important; height: 58px !important; }
           .quick-actions { padding-top: 12px !important; }
           .quick-actions > div { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 8px !important; }
           .quick-actions button { min-height: 66px; padding: 7px 5px !important; }
@@ -2180,7 +2186,7 @@ const formattedSchedules = await Promise.all(
           </section>
           <footer style={{background:"linear-gradient(180deg,#08608d 0%,#07547e 48%,#043e63 100%)",color:"#fff",padding:"8px 16px 18px",textAlign:"center",marginTop:-1}}>
             <div style={{maxWidth:1050,margin:"0 auto",display:"flex",justifyContent:"center",alignItems:"center",gap:10,flexWrap:"nowrap"}}>
-              <div aria-hidden="true" style={{width:54,height:54,borderRadius:"50%",background:"#22c55e",display:"flex",alignItems:"center",justifyContent:"center",fontSize:29,boxShadow:"0 5px 14px rgba(0,0,0,.18)"}}>☎</div>
+              <div className="home-contact-icon" aria-hidden="true" style={{width:54,height:54,borderRadius:"50%",background:"#22c55e",display:"flex",alignItems:"center",justifyContent:"center",fontSize:29,boxShadow:"0 5px 14px rgba(0,0,0,.18)"}}>☎</div>
               <div style={{textAlign:"left",lineHeight:1.15}}>
                 <div style={{fontSize:10,opacity:.9}}>Informasi Pelatihan</div>
                 <strong style={{fontSize:"clamp(14px,3.7vw,18px)",color:"#ffe84a",whiteSpace:"nowrap"}}>0858-1446-6929</strong>
@@ -2627,7 +2633,7 @@ const formattedSchedules = await Promise.all(
       )}
 
       {["home","pendaftaran","jadwal","pembayaran","program","progress","video","chat"].includes(page) && (
-        <nav style={{position:"relative",zIndex:20,background:"#003a61",color:"#fff",display:"grid",gridTemplateColumns:"repeat(6,1fr)",padding:"9px 2px 8px",boxShadow:"0 -4px 18px rgba(0,0,0,.15)"}}>
+        <nav className="bottom-nav" style={{position:"relative",zIndex:20,background:"#003a61",color:"#fff",display:"grid",gridTemplateColumns:"repeat(6,1fr)",padding:"9px 2px 8px",boxShadow:"0 -4px 18px rgba(0,0,0,.15)"}}>
           {[
             ["home","⌂","Home"],["progress","📈","Progress"],["video","▶️","Video"],["sk","S&K","S&K"],["program","🏓","Program"],["chat","💬","Chat Public"]
           ].map(([key,ic,label])=><button key={key} type="button" onClick={()=>key === "sk" ? setShowTerms(true) : setPage(key)}
@@ -3588,7 +3594,7 @@ const formattedSchedules = await Promise.all(
             }}
             style={{border:0,background:"transparent",padding:0,cursor:"pointer",display:"flex",alignItems:"center"}}
           >
-            <img
+            <img className="footer-qr"
               src={qrPingpongTraining}
               alt="QR PINGPONG TRAINING"
               style={{width:54,height:54,objectFit:"contain",borderRadius:6,background:"#fff",padding:2}}
