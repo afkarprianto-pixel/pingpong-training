@@ -1229,7 +1229,12 @@ const formattedSchedules = await Promise.all(
             padding-bottom: 14px !important;
           }
           html, body, #root {
+            margin: 0 !important;
             margin-bottom: 0 !important;
+            background: #061a3a !important;
+          }
+          .app {
+            background: #061a3a !important;
           }
         }
       `}</style>
@@ -1543,7 +1548,7 @@ const formattedSchedules = await Promise.all(
             </div>
           </section>
 
-          <section style={{background:"linear-gradient(180deg,#07506a 0%,#6f9caf 18%,#d8e1e6 48%,#c7d6de 62%,#4f8eaa 82%,#08608d 100%)",padding:"18px 12px 16px",marginTop:-1}}>
+          <section style={{background:"linear-gradient(180deg,#07506a 0%,#6f9caf 18%,#d8e1e6 48%,#c7d6de 62%,#4f8eaa 82%,#08608d 100%)",padding:"26px 12px 22px",marginTop:-1}}>
             <div style={{maxWidth:1050,margin:"0 auto",display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:7}}>
               <button type="button" onClick={()=>setPage("pendaftaran")}
                 style={{border:0,borderRadius:11,padding:"6px 6px",background:"linear-gradient(145deg,rgba(8,111,158,.94),rgba(3,65,96,.92))",border:"1px solid rgba(210,240,246,.48)",boxShadow:"0 7px 16px rgba(0,35,55,.18),inset 0 1px 0 rgba(255,255,255,.16)",color:"#fff",cursor:"pointer"}}>
@@ -2188,7 +2193,7 @@ const formattedSchedules = await Promise.all(
               <p style={{marginBottom:0}}>Teknik Dasar • Spin & Topspin • Blok & Defense • Latihan Taktik • Private • Grup 3–4 Orang</p>
             </div>
           </section>
-          <footer style={{background:"linear-gradient(180deg,#08608d 0%,#07547e 48%,#043e63 100%)",color:"#fff",padding:"12px 16px 14px",textAlign:"center",marginTop:-1}}>
+          <footer style={{background:"linear-gradient(180deg,#08608d 0%,#07547e 48%,#043e63 100%)",color:"#fff",padding:"20px 16px 18px",textAlign:"center",marginTop:-1}}>
             <div style={{maxWidth:1050,margin:"0 auto",display:"flex",justifyContent:"center",alignItems:"center",gap:10,flexWrap:"nowrap"}}>
               <img src={pingpongTrainingLogo} alt="PINGPONG TRAINING" style={{width:72,maxHeight:34,objectFit:"contain",alignSelf:"flex-end"}}/>
               <div style={{textAlign:"left",lineHeight:1.15}}>
@@ -2637,7 +2642,7 @@ const formattedSchedules = await Promise.all(
       )}
 
       {["home","pendaftaran","jadwal","pembayaran","program","progress","video","chat"].includes(page) && (
-        <nav style={{position:"sticky",bottom:0,zIndex:20,background:"#003a61",color:"#fff",display:"grid",gridTemplateColumns:"repeat(6,1fr)",padding:"4px 2px",boxShadow:"0 -4px 18px rgba(0,0,0,.15)"}}>
+        <nav style={{position:"sticky",bottom:0,zIndex:20,background:"#003a61",color:"#fff",display:"grid",gridTemplateColumns:"repeat(6,1fr)",padding:"9px 2px 8px",boxShadow:"0 -4px 18px rgba(0,0,0,.15)"}}>
           {[
             ["home","⌂","Home"],["progress","📈","Progress"],["video","▶️","Video"],["sk","S&K","S&K"],["program","🏓","Program"],["chat","💬","Chat Public"]
           ].map(([key,ic,label])=><button key={key} type="button" onClick={()=>key === "sk" ? setShowTerms(true) : setPage(key)}
@@ -3581,7 +3586,7 @@ const formattedSchedules = await Promise.all(
 
 
 
-      <footer style={{padding:"8px 12px 10px",minHeight:"auto",height:"auto"}}>
+      <footer style={{padding:"16px 12px 14px",minHeight:"auto",height:"auto",background:"#061a3a",margin:0}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,lineHeight:1.15}}>
           <button
             type="button"
