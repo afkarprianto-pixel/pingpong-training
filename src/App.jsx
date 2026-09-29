@@ -1498,37 +1498,6 @@ const formattedSchedules = await Promise.all(
             transform: translateY(0) !important;
           }
         }
-
-        /* ===== TAMBAH JADWAL COMPACT V3 ===== */
-        .coach-schedule-compact .registration-form{padding:8px 12px!important;margin:4px 0!important}
-        .coach-schedule-compact .registration-form h3{margin:0 0 5px!important;font-size:17px!important;text-align:center}
-        .coach-schedule-compact .form-group{margin-bottom:3px!important}
-        .coach-schedule-compact .form-group label{font-size:9px!important;margin-bottom:2px!important}
-        .coach-schedule-compact input,.coach-schedule-compact select{min-height:30px!important;height:30px!important;padding:3px 8px!important;font-size:10px!important}
-        .coach-schedule-compact p{font-size:9px!important;margin:2px 0!important}
-        .coach-schedule-compact .cost-summary-compact{padding:6px 9px!important;margin:3px 0!important;border-radius:12px!important}
-        .coach-schedule-compact .cost-summary-compact h3{font-size:13px!important;margin:0 0 1px!important}
-        .coach-schedule-compact .cost-summary-compact>p{font-size:8px!important;margin:0 0 4px!important}
-        .coach-schedule-compact .cost-body-compact{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 250px;gap:8px;align-items:end}
-        .coach-schedule-compact .cost-field-compact{min-width:0}
-        .coach-schedule-compact .cost-field-compact .money-row{display:grid;grid-template-columns:20px minmax(0,1fr) 14px;gap:3px;align-items:center}
-        .coach-schedule-compact .cost-field-compact input{width:100%!important;box-sizing:border-box}
-        .coach-schedule-compact .cost-lines{display:grid;grid-template-columns:86px 8px 1fr;gap:1px 3px;width:100%;margin:0;font-size:9px;line-height:1.15;text-align:left;align-self:center}
-        .coach-schedule-compact .cost-lines .colon{text-align:center;font-weight:700}
-        .coach-schedule-compact .cost-lines .value{font-weight:700;white-space:nowrap}
-        .coach-schedule-compact .register-submit{min-height:31px!important;margin-top:3px!important;padding:4px 10px!important}
-        .coach-schedule-compact .schedule-active-row{margin:2px 0!important;font-size:10px!important}
-        @media(min-width:701px){
-          .coach-schedule-compact .registration-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:10px;align-items:start}
-          .coach-schedule-compact .registration-form>h3,
-          .coach-schedule-compact .registration-form>.cost-summary-compact,
-          .coach-schedule-compact .registration-form>.schedule-active-row,
-          .coach-schedule-compact .registration-form>.register-submit{grid-column:1/-1}
-        }
-        @media(max-width:700px){
-          .coach-schedule-compact .cost-body-compact{grid-template-columns:1fr}
-          .coach-schedule-compact .cost-lines{width:min(100%,300px);margin:3px auto 0}
-        }
       `}</style>
 
       {page === "admin" && (
@@ -1589,7 +1558,7 @@ const formattedSchedules = await Promise.all(
               </section>
             )}
 
-            {coachMenu==="schedule" && (<div className="coach-schedule-compact">
+            {coachMenu==="schedule" && (<>
             <form className="registration-form" onSubmit={saveSchedule} style={{margin:"8px 0 12px",maxWidth:"none"}}>
 
               <h3>{editId ? "Edit Jadwal" : "Tambah Jadwal"}</h3>
@@ -1630,51 +1599,42 @@ const formattedSchedules = await Promise.all(
 
               <div className="form-group"><label>Pelatih</label><input value={scheduleForm.coach} required onChange={e=>setScheduleForm(p=>({...p,coach:e.target.value}))}/></div>
 
-              <div className="cost-summary-compact" style={{border:"1px solid #b9d0da",background:"linear-gradient(135deg,#edf5f7,#dcebef)"}}>
-                <h3>Pengaturan Biaya Latihan</h3>
-                <p>Tarif berlaku untuk jadwal ini dan bisa diubah kapan saja.</p>
-
-                <div className="cost-body-compact">
-                  <div className="cost-field-compact">
-                    <label style={{display:"block",textAlign:"center",fontSize:9,fontWeight:800,marginBottom:2}}>Tarif Pelatih per Sesi</label>
-                    <div className="money-row">
-                      <strong style={{fontSize:10}}>Rp</strong>
-                      <input inputMode="numeric" value={angkaRupiah(scheduleForm.coach_rate)} onChange={e=>setScheduleForm(p=>({...p,coach_rate:bacaRupiah(e.target.value)}))}/>
-                      <strong style={{fontSize:10}}>,-</strong>
-                    </div>
-                  </div>
-
-                  <div className="cost-field-compact">
-                    <label style={{display:"block",textAlign:"center",fontSize:9,fontWeight:800,marginBottom:2}}>Sewa Lapangan per Jam</label>
-                    <div className="money-row">
-                      <strong style={{fontSize:10}}>Rp</strong>
-                      <input inputMode="numeric" value={angkaRupiah(scheduleForm.rental_rate_per_hour)} onChange={e=>setScheduleForm(p=>({...p,rental_rate_per_hour:bacaRupiah(e.target.value)}))}/>
-                      <strong style={{fontSize:10}}>,-</strong>
-                    </div>
-                  </div>
-
-                  <div className="cost-lines">
-                    <span>Durasi</span><span className="colon">:</span><span className="value">{([1,2,3].includes(durasiJam(scheduleForm.start_time,scheduleForm.end_time))?durasiJam(scheduleForm.start_time,scheduleForm.end_time):2)} jam</span>
-                    <span>Sewa Total</span><span className="colon">:</span><span className="value">{rupiah(scheduleForm.rental_rate_per_hour * ([1,2,3].includes(durasiJam(scheduleForm.start_time,scheduleForm.end_time))?durasiJam(scheduleForm.start_time,scheduleForm.end_time):2))}</span>
-                    <span>Total Sesi</span><span className="colon">:</span><span className="value">{rupiah(Number(scheduleForm.coach_rate) + Number(scheduleForm.rental_rate_per_hour)*([1,2,3].includes(durasiJam(scheduleForm.start_time,scheduleForm.end_time))?durasiJam(scheduleForm.start_time,scheduleForm.end_time):2))}</span>
-                    {scheduleForm.type==="Private" ? <>
-                      <span>Private (1 orang)</span><span className="colon">:</span><span className="value">{rupiah(Number(scheduleForm.coach_rate)+Number(scheduleForm.rental_rate_per_hour)*([1,2,3].includes(durasiJam(scheduleForm.start_time,scheduleForm.end_time))?durasiJam(scheduleForm.start_time,scheduleForm.end_time):2))}</span>
-                    </> : <>
-                      <span>Jika 3 Peserta</span><span className="colon">:</span><span className="value">{rupiah((Number(scheduleForm.coach_rate)+Number(scheduleForm.rental_rate_per_hour)*([1,2,3].includes(durasiJam(scheduleForm.start_time,scheduleForm.end_time))?durasiJam(scheduleForm.start_time,scheduleForm.end_time):2))/3)} / orang</span>
-                      <span>Jika 4 Peserta</span><span className="colon">:</span><span className="value">{rupiah((Number(scheduleForm.coach_rate)+Number(scheduleForm.rental_rate_per_hour)*([1,2,3].includes(durasiJam(scheduleForm.start_time,scheduleForm.end_time))?durasiJam(scheduleForm.start_time,scheduleForm.end_time):2))/4)} / orang</span>
-                    </>}
+              <div style={{padding:10,border:"1px solid #b9d0da",borderRadius:10,marginBottom:9,background:"linear-gradient(135deg,#edf5f7,#dcebef)"}}>
+                <h3 style={{marginTop:0}}>Pengaturan Biaya Latihan</h3>
+                <p style={{fontSize:13}}>Tarif berlaku untuk jadwal ini dan bisa diubah kapan saja.</p>
+                <div className="form-group">
+                  <label>Tarif Pelatih per Sesi</label>
+                  <div style={{display:"flex",alignItems:"center",gap:6}}>
+                    <strong>Rp</strong>
+                    <input inputMode="numeric" value={angkaRupiah(scheduleForm.coach_rate)} onChange={e=>setScheduleForm(p=>({...p,coach_rate:bacaRupiah(e.target.value)}))}/>
+                    <strong>,-</strong>
                   </div>
                 </div>
+                <div className="form-group">
+                  <label>Sewa Lapangan per Jam</label>
+                  <div style={{display:"flex",alignItems:"center",gap:6}}>
+                    <strong>Rp</strong>
+                    <input inputMode="numeric" value={angkaRupiah(scheduleForm.rental_rate_per_hour)} onChange={e=>setScheduleForm(p=>({...p,rental_rate_per_hour:bacaRupiah(e.target.value)}))}/>
+                    <strong>,-</strong>
+                  </div>
+                </div>
+                <p>Durasi: <strong>{([1,2,3].includes(durasiJam(scheduleForm.start_time,scheduleForm.end_time))?durasiJam(scheduleForm.start_time,scheduleForm.end_time):2).toLocaleString("id-ID")} jam</strong> (sesuai pilihan durasi).</p>
+                <p>Sewa total: <strong>{rupiah(scheduleForm.rental_rate_per_hour * ([1,2,3].includes(durasiJam(scheduleForm.start_time,scheduleForm.end_time))?durasiJam(scheduleForm.start_time,scheduleForm.end_time):2))}</strong></p>
+                <p>Total sesi: <strong>{rupiah(Number(scheduleForm.coach_rate) + Number(scheduleForm.rental_rate_per_hour)*([1,2,3].includes(durasiJam(scheduleForm.start_time,scheduleForm.end_time))?durasiJam(scheduleForm.start_time,scheduleForm.end_time):2))}</strong></p>
+                {scheduleForm.type==="Private"
+                  ? <p>Private (1 orang): <strong>{rupiah(Number(scheduleForm.coach_rate)+Number(scheduleForm.rental_rate_per_hour)*([1,2,3].includes(durasiJam(scheduleForm.start_time,scheduleForm.end_time))?durasiJam(scheduleForm.start_time,scheduleForm.end_time):2))}</strong></p>
+                  : <div><p>Jika 3 peserta: <strong>{rupiah((Number(scheduleForm.coach_rate)+Number(scheduleForm.rental_rate_per_hour)*([1,2,3].includes(durasiJam(scheduleForm.start_time,scheduleForm.end_time))?durasiJam(scheduleForm.start_time,scheduleForm.end_time):2))/3)}</strong> / orang</p>
+                    <p>Jika 4 peserta: <strong>{rupiah((Number(scheduleForm.coach_rate)+Number(scheduleForm.rental_rate_per_hour)*([1,2,3].includes(durasiJam(scheduleForm.start_time,scheduleForm.end_time))?durasiJam(scheduleForm.start_time,scheduleForm.end_time):2))/4)}</strong> / orang</p></div>}
               </div>
 
-              <label className="schedule-active-row" style={{display:"flex",gap:8,marginBottom:7}}><input type="checkbox" checked={scheduleForm.is_active} onChange={e=>setScheduleForm(p=>({...p,is_active:e.target.checked}))}/> Jadwal Aktif</label>
+              <label style={{display:"flex",gap:8,marginBottom:7}}><input type="checkbox" checked={scheduleForm.is_active} onChange={e=>setScheduleForm(p=>({...p,is_active:e.target.checked}))}/> Jadwal Aktif</label>
 
               <button className="register-submit" type="submit" disabled={savingSchedule}>{savingSchedule ? "Menyimpan..." : editId ? "Simpan Perubahan" : "Tambah Jadwal"}</button>
 
               {editId && <button type="button" className="back-button" onClick={()=>{setEditId(null);setScheduleForm({...emptySchedule});}}>Batal Edit</button>}
 
             </form>
-            </div>)}
+            </>)}
 
             {coachMenu==="participants" && (<>
                           <section style={{margin:"12px 0",padding:12,background:"rgba(255,255,255,.82)",borderRadius:12,border:"1px solid #b9d0da"}}>
@@ -3166,6 +3126,23 @@ const formattedSchedules = await Promise.all(
         </nav>
       )}
 
+      {page === "home" && (
+        <div
+          style={{
+            background:"#061a3a",
+            color:"#ffffff",
+            padding:"7px 10px 2px",
+            fontSize:11,
+            fontWeight:400,
+            lineHeight:1.2,
+            textAlign:"left",
+            textShadow:"0 1px 3px rgba(0,0,0,.65)"
+          }}
+        >
+          👁 Pengunjung: {visitorCount.toLocaleString("id-ID")}
+        </div>
+      )}
+
 
       {showQrPopup && (
         <div
@@ -4191,18 +4168,6 @@ const formattedSchedules = await Promise.all(
             <strong style={{margin:0}}>PINGPONG TRAINING</strong>
             <span style={{margin:0}}>Table Tennis Training Center</span>
             <span style={{fontSize:10,opacity:.8}}>Klik QR untuk memperbesar</span>
-            <span style={{
-              position:"absolute",
-              left:10,
-              bottom:6,
-              fontSize:11,
-              fontWeight:400,
-              color:"#ffffff",
-              opacity:.95,
-              textAlign:"left",
-              textShadow:"0 1px 3px rgba(0,0,0,.65)",
-              whiteSpace:"nowrap"
-            }}>👁 Pengunjung: {visitorCount.toLocaleString("id-ID")}</span>
           </div>
         </div>
       </footer>
