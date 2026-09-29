@@ -1363,7 +1363,7 @@ const formattedSchedules = await Promise.all(
 
   return (
 
-    <div className="app">
+    <div className={`app ${page === "home" ? "home-app" : ""}`}>
 
 
 
@@ -2204,6 +2204,55 @@ const formattedSchedules = await Promise.all(
             margin-bottom:0 !important;
             padding-top:0 !important;
             padding-bottom:0 !important;
+          }
+        }
+
+
+        /* =========================================================
+           FIX FINAL KHUSUS HP:
+           Ruang kosong di bawah bukan padding footer, tetapi sisa
+           viewport setelah konten selesai. Home dibuat setinggi layar
+           dan sisa tinggi diberikan ke FOTO/HERO, bukan ke footer.
+           Desktop tidak berubah.
+        ========================================================= */
+        @media (max-width:600px){
+          .app.home-app{
+            min-height:100vh !important;
+            min-height:100dvh !important;
+            height:auto !important;
+            display:flex !important;
+            flex-direction:column !important;
+            background:#061a3a !important;
+          }
+
+          /* Foto menyerap sisa tinggi layar agar tidak ada blok navy kosong bawah */
+          .app.home-app .hero{
+            flex:1 1 auto !important;
+            height:auto !important;
+            min-height:335px !important;
+          }
+
+          /* Bagian setelah foto tidak ikut membesar */
+          .app.home-app .home-modern-actions,
+          .app.home-app .bottom-nav,
+          .app.home-app .home-visitor-compact,
+          .app.home-app .home-footer-modern{
+            flex:0 0 auto !important;
+          }
+
+          .app.home-app .home-footer-modern{
+            min-height:0 !important;
+            height:auto !important;
+            margin:0 !important;
+            padding-top:2px !important;
+            padding-bottom:4px !important;
+          }
+
+          .app.home-app .home-footer-inner{
+            min-height:0 !important;
+            height:auto !important;
+            margin:0 auto !important;
+            padding:0 !important;
           }
         }
 
