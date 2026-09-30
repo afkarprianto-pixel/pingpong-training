@@ -634,6 +634,7 @@ function App() {
   const [loadingPrivateRequests, setLoadingPrivateRequests] = useState(false);
   const [privateName, setPrivateName] = useState("");
   const [privateMessage, setPrivateMessage] = useState("");
+  const [privateProgram, setPrivateProgram] = useState("Teknik Dasar");
   const [privateThreadId, setPrivateThreadId] = useState(null);
   const [privateThreadMessages, setPrivateThreadMessages] = useState([]);
   const [privateReplyText, setPrivateReplyText] = useState("");
@@ -984,7 +985,7 @@ const formattedSchedules = await Promise.all(
     const { data:req, error } = await supabase.from("private_requests").insert({
       name:privateName.trim(),
       whatsapp:"Belum diberikan",
-      member_note:privateMessage.trim(),
+      member_note:`Program: ${privateProgram}\n\n${privateMessage.trim()}`,
       status:"Menunggu Tanggapan"
     }).select("id").single();
     if (error) {
@@ -993,7 +994,7 @@ const formattedSchedules = await Promise.all(
       return;
     }
     const { error:msgError } = await supabase.from("private_request_messages").insert({
-      request_id:req.id, sender_type:"member", sender_name:privateName.trim(), message:privateMessage.trim()
+      request_id:req.id, sender_type:"member", sender_name:privateName.trim(), message:`Program: ${privateProgram}\n\n${privateMessage.trim()}`
     });
     setPrivateRequestBusy(false);
     if (msgError) { alert("Pengajuan dibuat, tetapi pesan gagal disimpan: "+msgError.message); return; }
@@ -1376,21 +1377,13 @@ const formattedSchedules = await Promise.all(
 
       <header className="header">
 
-        <div className="brand" onClick={backHome} style={{display:"flex",alignItems:"center",gap:8}}>
-          <img
-            src={pingpongTrainingLogo}
-            alt="PINGPONG TRAINING"
-            style={{
-              display:"block",
-              width:"clamp(72px, 13vw, 110px)",
-              maxHeight:42,
-              objectFit:"contain",
-              objectPosition:"left center"
-            }}
-          />
-          <div style={{lineHeight:1.05,whiteSpace:"nowrap"}}>
-            <div style={{fontSize:"clamp(14px,3.5vw,20px)",fontWeight:800,color:"#fff",letterSpacing:.2}}>PINGPONG</div>
-            <div style={{fontSize:"clamp(10px,2.5vw,14px)",fontWeight:800,color:"#20d69b",letterSpacing:1}}>TRAINING</div>
+        <div className="brand modern-brand" onClick={backHome}>
+          <div className="modern-brand-logo-wrap">
+            <img src={pingpongTrainingLogo} alt="PINGPONG TRAINING" />
+          </div>
+          <div className="modern-brand-copy">
+            <div className="modern-brand-ping">PINGPONG</div>
+            <div className="modern-brand-training">TRAINING</div>
           </div>
         </div>
 
@@ -2386,6 +2379,48 @@ const formattedSchedules = await Promise.all(
           }
         }
 
+        /* ===== MODERN FRONT UI 2026 ===== */
+        .modern-brand{display:flex;align-items:center;gap:8px;cursor:pointer;min-width:0}
+        .modern-brand-logo-wrap{width:42px;height:42px;border-radius:50%;background:#fff;display:grid;place-items:center;box-shadow:0 4px 14px rgba(0,0,0,.18);overflow:hidden}
+        .modern-brand-logo-wrap img{width:100%;height:100%;object-fit:contain}
+        .modern-brand-copy{line-height:.95;white-space:nowrap}
+        .modern-brand-ping{font-size:clamp(14px,3.8vw,20px);font-weight:950;color:#fff;letter-spacing:.2px}
+        .modern-brand-training{font-size:clamp(12px,3.2vw,17px);font-weight:950;color:#28e2ad;letter-spacing:.7px;margin-top:3px}
+        .modern-hero-label{display:inline-flex!important;align-items:center;background:linear-gradient(90deg,rgba(4,91,160,.92),rgba(8,124,165,.86))!important;border:1px solid rgba(95,211,255,.55)!important;border-radius:999px!important;padding:5px 11px!important;font-size:10px!important;font-weight:850!important;letter-spacing:.35px!important;box-shadow:0 5px 16px rgba(0,24,54,.22)}
+        .modern-hero-title{text-align:left!important;font-size:clamp(27px,7.2vw,42px)!important;line-height:1.02!important;margin:13px 0 8px!important;font-weight:950!important;letter-spacing:-.8px;color:#fff;text-shadow:0 4px 14px rgba(0,0,0,.5)}
+        .modern-hero-title span{color:#27e2dc!important}
+        .modern-hero-sub{text-align:left;max-width:300px;color:#fff;font-size:12px;line-height:1.35;font-weight:650;text-shadow:0 2px 7px rgba(0,0,0,.7)}
+        .hero-content{text-align:left!important}
+
+        .program-picker{max-width:680px;margin:0 auto 18px;background:rgba(255,255,255,.94);padding:14px;border-radius:20px;box-shadow:0 10px 30px rgba(20,55,75,.11);border:1px solid #c9dce4}
+        .program-picker-title{font-size:14px;font-weight:950;color:#0b3550;margin-bottom:9px}
+        .program-picker-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+        .program-picker-card{border:0;border-radius:17px;padding:15px 10px;color:#fff;min-height:125px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 8px 18px rgba(0,48,78,.13);transition:.18s}
+        .program-picker-card.group{background:linear-gradient(145deg,#268eff,#0870df)}
+        .program-picker-card.private{background:linear-gradient(145deg,#20d8b1,#06957e)}
+        .program-picker-card:not(.active){filter:saturate(.72);opacity:.82;transform:scale(.985)}
+        .program-picker-card.active{outline:3px solid rgba(8,123,114,.18);transform:translateY(-2px)}
+        .program-picker-icon{font-size:29px;margin-bottom:6px}.program-picker-card strong{font-size:17px}.program-picker-card small{font-size:10px;line-height:1.3;margin-top:4px;max-width:145px}
+        .group-size-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.group-size-card{background:#eef7ff;border:1px solid #c5def2;border-radius:12px;padding:10px 5px;text-align:center;color:#164f76}.group-size-card b,.group-size-card small{display:block}.group-size-card small{font-size:9px;margin-top:3px;color:#648091}
+
+        .private-request-modern{max-width:680px;margin:0 auto;background:#fff;padding:16px;border-radius:20px;box-shadow:0 10px 30px rgba(20,55,75,.11);border:1px solid #cbdde4}
+        .private-request-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.private-request-head span{font-size:9px;font-weight:950;letter-spacing:1.2px;color:#0b8d7d}.private-request-head h3{margin:3px 0 0;color:#0b3550;font-size:20px}.private-request-badge{background:#e5f3ff;color:#0874d1;padding:7px 10px;border-radius:999px;font-size:10px;font-weight:900}.private-request-intro{font-size:11px;line-height:1.45;color:#607d8b;background:#f3f8fa;border-radius:11px;padding:9px 10px}
+        .private-program-block>label{display:block;font-weight:950;color:#0b3550;font-size:13px;margin:13px 0 7px}.private-program-list{display:grid;gap:7px}
+        .private-program-option{width:100%;border:1px solid #d5e2e8;background:#fff;border-radius:12px;padding:9px;display:grid;grid-template-columns:22px 34px 1fr;gap:7px;align-items:center;text-align:left;cursor:pointer;color:#163e55}.private-program-option.active{border:2px solid #1684f5;background:#f0f7ff;box-shadow:0 4px 12px rgba(22,132,245,.09)}.private-program-radio{color:#1684f5;font-size:18px}.private-program-icon{font-size:22px;text-align:center}.private-program-option strong,.private-program-option small{display:block}.private-program-option strong{font-size:12px}.private-program-option small{font-size:9px;color:#6d8592;margin-top:2px;line-height:1.25}
+        .coach-message-box{margin-top:13px;background:linear-gradient(180deg,#f7fbfd,#eef6fa);border:1px solid #c7dce6;border-radius:15px;padding:11px}.coach-message-title{display:flex;gap:8px;align-items:flex-start;color:#0b3550}.coach-message-title>span{font-size:21px}.coach-message-title strong,.coach-message-title small{display:block}.coach-message-title strong{font-size:13px}.coach-message-title small{font-size:9px;color:#718995;margin-top:2px;line-height:1.3}.coach-message-box textarea{width:100%;box-sizing:border-box;margin-top:9px;border:1px solid #b9d4e1;border-radius:11px;padding:11px;font:inherit;font-size:12px;line-height:1.45;resize:vertical;background:#fff;outline:none}.coach-message-box textarea:focus{border-color:#1684f5;box-shadow:0 0 0 3px rgba(22,132,245,.1)}.coach-message-count{text-align:right;font-size:9px;color:#78909c;margin-top:2px}.modern-private-submit{margin-top:11px!important;border-radius:12px!important;background:linear-gradient(90deg,#1684f5,#0871dd)!important;box-shadow:0 7px 16px rgba(8,113,221,.22)!important}
+
+        .modern-bottom-nav{position:relative!important;z-index:20!important;background:linear-gradient(180deg,#062d4c,#031f39)!important;color:#fff!important;display:grid!important;grid-template-columns:repeat(6,1fr)!important;padding:5px 4px 6px!important;box-shadow:0 -5px 18px rgba(0,0,0,.18)!important;border-top:1px solid rgba(90,205,255,.2)}
+        .modern-bottom-item{border:0;background:transparent;color:#fff;padding:5px 1px 3px;font-size:9px;cursor:pointer;position:relative;border-radius:11px;min-height:43px}
+        .modern-bottom-item.active{background:linear-gradient(145deg,rgba(22,132,245,.58),rgba(0,91,156,.72));color:#9ee8ff;box-shadow:inset 0 0 0 1px rgba(92,202,255,.22),0 3px 10px rgba(0,0,0,.15)}
+        .modern-bottom-item>div:last-child{font-weight:700;margin-top:1px}
+        @media(max-width:600px){
+          .header{background:linear-gradient(90deg,#052a4a,#043b62)!important}
+          .login-btn{font-size:9px!important;padding:6px 8px!important;border-radius:999px!important}
+          .hero-content{padding-top:2px!important}
+          .modern-hero-title{margin-top:10px!important}
+          .program-picker,.private-request-modern{border-radius:16px}
+        }
+
       `}</style>
 
       {page === "admin" && (
@@ -2840,8 +2875,9 @@ const formattedSchedules = await Promise.all(
             }}
           >
             <div className="hero-content" style={{maxWidth:610,padding:0,width:"100%",margin:"0 auto",textAlign:"center"}}>
-              <div className="hero-label" style={{fontSize:"clamp(9px,2.3vw,11px)",marginBottom:4,padding:"5px 10px"}}>🏓 PROGRAM LATIHAN TENIS MEJA</div>
-              <h2 style={{fontSize:"clamp(23px,5.7vw,36px)",lineHeight:1.02,margin:"4px 0 6px",fontWeight:950,textShadow:"0 3px 10px rgba(0,0,0,.48)"}}>Latihan Lebih Teratur,<br/><span>Progress Lebih Terukur.</span></h2>
+              <div className="hero-label modern-hero-label">PROGRAM LATIHAN TENIS MEJA</div>
+              <h2 className="modern-hero-title">Latihan<br/>Lebih Teratur,<br/><span>Progress<br/>Lebih Terukur</span></h2>
+              <div className="modern-hero-sub">Bersama Coach Profesional, untuk Semua Level Pemain</div>
 
             </div>
           </section>
@@ -3533,14 +3569,25 @@ const formattedSchedules = await Promise.all(
               <div style={{letterSpacing:3,color:"#079f79",fontWeight:700,fontSize:13}}>PENDAFTARAN LATIHAN</div>
               <h2 style={{fontSize:30,margin:"8px 0"}}>Pilih Program Latihan</h2>
             </div>
-            <div style={{maxWidth:680,margin:"0 auto 18px",display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-              {["Group","Private"].map(type=><button key={type} type="button" onClick={()=>setRegistrationProgram(type)}
-                style={{border:registrationProgram===type?"2px solid #087b72":"1px solid #b9c9d0",background:registrationProgram===type?"#087b72":"#fff",color:registrationProgram===type?"#fff":"#17394a",borderRadius:14,padding:"13px 8px",cursor:"pointer",fontWeight:900}}>
-                <div style={{fontSize:23}}>{type==="Group"?"👥":"💬"}</div>
-                <div style={{fontSize:14,marginTop:5}}>{type==="Group"?"LATIHAN GROUP":"PENGAJUAN PRIVATE"}</div>
-                <div style={{fontSize:10,opacity:.8,marginTop:3}}>{type==="Group"?"3–4 peserta":"Chat pribadi dengan Coach"}</div>
-              </button>)}
-            </div>
+            <section className="program-picker">
+              <div className="program-picker-title">Pilih Jenis Latihan</div>
+              <div className="program-picker-grid">
+                {["Group","Private"].map(type=><button key={type} type="button" onClick={()=>setRegistrationProgram(type)}
+                  className={`program-picker-card ${type.toLowerCase()} ${registrationProgram===type?"active":""}`}>
+                  <div className="program-picker-icon">{type==="Group"?"👥":"●"}</div>
+                  <strong>{type==="Group"?"Group":"Private"}</strong>
+                  <small>{type==="Group"?"Latihan bersama lebih seru & hemat":"Latihan fokus sesuai kebutuhan"}</small>
+                </button>)}
+              </div>
+              {registrationProgram==="Group" && <div className="group-size-preview">
+                <div className="program-picker-title" style={{marginTop:12}}>Pilihan Group</div>
+                <div className="group-size-grid">
+                  {[["3 Orang","Intensif"],["4 Orang","Seimbang"],["6 Orang","Lebih Hemat"]].map(([n,d])=>
+                    <div key={n} className="group-size-card"><b>👥 {n}</b><small>{d}</small></div>
+                  )}
+                </div>
+              </div>}
+            </section>
 
             {registrationProgram==="Group" ? <>
               <div className="day-filter">{days.map(day=><button key={day} className={selectedDay===day?"active":""} onClick={()=>setSelectedDay(day)}>{day}</button>)}</div>
@@ -3552,14 +3599,43 @@ const formattedSchedules = await Promise.all(
                     <button className="choose-btn" disabled={!item.available} onClick={()=>chooseSchedule(item)}>{item.available?"Pilih Group & Daftar":"Penuh / Ditutup"}</button>
                   </div>)}
               </div>
-            </> : <section style={{maxWidth:680,margin:"0 auto",background:"#fff",padding:16,borderRadius:16,boxShadow:"0 8px 24px rgba(20,55,75,.08)"}}>
-              <h3 style={{margin:"0 0 6px"}}>💬 Pengajuan Private</h3>
-              <p style={{fontSize:12,color:"#64748b",marginTop:0}}>Cukup tulis seperti sedang menghubungi Coach. Percakapan ini tidak tampil di Chat Publik.</p>
+            </> : <section className="private-request-modern">
+              <div className="private-request-head">
+                <div><span>PRIVATE TRAINING</span><h3>Pengajuan Latihan Private</h3></div>
+                <div className="private-request-badge">1 Peserta</div>
+              </div>
+              <p className="private-request-intro">Pilih fokus latihan, lalu tuliskan kebutuhan Anda. Pesan akan masuk langsung ke Ruang Pelatih dan tidak tampil di Chat Publik.</p>
 
               {!privateThreadId ? <form onSubmit={mulaiPengajuanPrivate}>
-                <div className="form-group"><label>Nama</label><input required placeholder="Contoh: Teguh" value={privateName} onChange={e=>setPrivateName(e.target.value)}/></div>
-                <div className="form-group"><label>Pesan untuk Coach</label><textarea required rows={4} placeholder="Pak, saya Teguh. Saya mau Private hari Sabtu jam 18.00–20.00, apakah bisa Pak?" value={privateMessage} onChange={e=>setPrivateMessage(e.target.value)}/></div>
-                <button className="register-submit" disabled={privateRequestBusy}>{privateRequestBusy?"Mengirim...":"Kirim ke Coach"}</button>
+                <div className="form-group"><label>Nama</label><input required placeholder="Nama Anda" value={privateName} onChange={e=>setPrivateName(e.target.value)}/></div>
+
+                <div className="private-program-block">
+                  <label>Pilih Program Latihan</label>
+                  <div className="private-program-list">
+                    {[
+                      ["Teknik Dasar","Servis, receive, stroke dasar & footwork","🏓"],
+                      ["Spin Bola Kosong","Topspin, underspin & sidespin","🔄"],
+                      ["Spin Bola Isi","Kontrol spin dan pola serangan","⚡"],
+                      ["Teknik Block & Defend","Block, chop dan pertahanan","🛡️"],
+                      ["Menghadapi Pemain Bintik","Strategi dan pola menghadapi bintik","🎯"],
+                      ["Persiapan Turnamen","Game plan & simulasi pertandingan","🏆"],
+                      ["Program Khusus","Materi sesuai kebutuhan Anda","⚙️"]
+                    ].map(([title,desc,icon])=><button key={title} type="button"
+                      className={`private-program-option ${privateProgram===title?"active":""}`}
+                      onClick={()=>setPrivateProgram(title)}>
+                      <span className="private-program-radio">{privateProgram===title?"●":"○"}</span>
+                      <span className="private-program-icon">{icon}</span>
+                      <span><strong>{title}</strong><small>{desc}</small></span>
+                    </button>)}
+                  </div>
+                </div>
+
+                <div className="coach-message-box">
+                  <div className="coach-message-title"><span>💬</span><div><strong>Pesan Untuk Coach</strong><small>Opsional detail kebutuhan, target, hari atau jam yang diinginkan</small></div></div>
+                  <textarea required rows={5} maxLength={500} placeholder="Contoh: Coach, saya ingin fokus latihan servis dan receive. Kalau bisa hari Sabtu jam 18.00–20.00. Terima kasih Coach 🙏" value={privateMessage} onChange={e=>setPrivateMessage(e.target.value)}/>
+                  <div className="coach-message-count">{privateMessage.length}/500</div>
+                </div>
+                <button className="register-submit modern-private-submit" disabled={privateRequestBusy}>{privateRequestBusy?"Mengirim...":"Kirim Pengajuan Private  ›"}</button>
                 <button type="button" className="back-button" style={{width:"100%",marginTop:8}} onClick={bukaPercakapanPrivateSaya}>Buka Percakapan Saya</button>
               </form> : <>
                 <div style={{background:"#eef4f6",borderRadius:12,padding:10,maxHeight:330,overflowY:"auto",display:"grid",gap:8}}>
@@ -4020,11 +4096,11 @@ const formattedSchedules = await Promise.all(
       )}
 
       {["home","pendaftaran","jadwal","pembayaran","program","progress","video","news","chat"].includes(page) && (
-        <nav className="bottom-nav" style={{position:"relative",zIndex:20,background:"#003a61",color:"#fff",display:"grid",gridTemplateColumns:"repeat(6,1fr)",padding:"9px 2px 8px",boxShadow:"0 -4px 18px rgba(0,0,0,.15)"}}>
+        <nav className="bottom-nav modern-bottom-nav">
           {[
             ["home","⌂","Home"],["progress","📈","Progress"],["video","▶️","Video"],["sk","S&K","S&K"],["news","📰","Berita"],["chat","💬","Chat"]
           ].map(([key,ic,label])=><button key={key} type="button" onClick={()=>key === "sk" ? setShowTerms(true) : setPage(key)}
-            style={{border:0,background:"transparent",color:page===key?"#24b6ff":"#fff",padding:"4px 1px",fontSize:10,cursor:"pointer",position:"relative"}}>
+            className={`modern-bottom-item ${page===key?"active":""}`}>
             {key === "sk" ? (
               <img src={skIcon} alt="" aria-hidden="true" style={{display:"block",width:24,height:24,objectFit:"cover",borderRadius:5,margin:"0 auto"}} />
             ) : (
