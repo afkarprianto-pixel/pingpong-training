@@ -655,23 +655,22 @@ function App() {
 
   useEffect(() => {
     let cancelled = false;
-    async function catatDanHitungPengunjung() {
+    async function catatDanHitungKunjungan() {
       try {
-        let visitorId = localStorage.getItem("pingtrn_visitor_id");
-        if (!visitorId) {
-          visitorId = window.crypto?.randomUUID?.() || `visitor-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-          localStorage.setItem("pingtrn_visitor_id", visitorId);
-          const { error: insertError } = await supabase.from("site_visits").insert({ visitor_id: visitorId });
-          if (insertError) console.error("Gagal mencatat pengunjung:", insertError);
-        }
+        // Setiap kali situs dibuka/reload, catat sebagai 1 kunjungan baru.
+        // Tidak lagi memakai visitor_id tetap dari localStorage/perangkat.
+        const visitId = window.crypto?.randomUUID?.() || `visit-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        const { error: insertError } = await supabase.from("site_visits").insert({ visitor_id: visitId });
+        if (insertError) console.error("Gagal mencatat kunjungan:", insertError);
+
         const { count, error } = await supabase.from("site_visits").select("id", { count:"exact", head:true });
-        if (error) console.error("Gagal menghitung pengunjung:", error);
+        if (error) console.error("Gagal menghitung kunjungan:", error);
         else if (!cancelled) setVisitorCount(count || 0);
       } catch (error) {
-        console.error("Visitor counter error:", error);
+        console.error("Visit counter error:", error);
       }
     }
-    catatDanHitungPengunjung();
+    catatDanHitungKunjungan();
     return () => { cancelled = true; };
   }, []);
 
@@ -1559,6 +1558,11 @@ const formattedSchedules = await Promise.all(
           padding: 4px 10px 2px !important;
           min-height: 20px !important;
           margin: 0 !important;
+          width: 100% !important;
+          display: flex !important;
+          justify-content: flex-end !important;
+          align-items: center !important;
+          text-align: right !important;
         }
 
         /* Footer QR dinaikkan dan dirapatkan, tetapi masih punya padding */
@@ -2410,7 +2414,8 @@ const formattedSchedules = await Promise.all(
                     ["participants","👥","Daftar Peserta","Data member dan pembayaran"],
                     ["private","💬","Pengajuan Private","Buka dan balas permintaan Private"],
                     ["news","📰","Kelola Berita Tenis Meja","Tambah, edit dan terbitkan berita"],
-                    ["scheduleList","📋","Daftar Jadwal","Kelola jadwal yang sudah dibuat"]
+                    ["scheduleList","📋","Daftar Jadwal","Kelola jadwal yang sudah dibuat"],
+                    ["visitors","👁","Statistik Kunjungan","Lihat jumlah kunjungan situs"]
                   ].map(([key,icon,title,desc])=>(
                     <button key={key} type="button" onClick={()=>{setCoachMenu(key);window.scrollTo(0,0);}}
                       style={{minHeight:108,padding:"12px 8px",border:"1px solid #b9d0da",borderRadius:13,background:"linear-gradient(145deg,#ffffff,#edf5f7)",boxShadow:"0 5px 14px rgba(0,43,64,.07)",cursor:"pointer",textAlign:"center"}}>
@@ -2419,6 +2424,20 @@ const formattedSchedules = await Promise.all(
                       <div style={{fontSize:10,color:"#607d8b",lineHeight:1.3,marginTop:3}}>{desc}</div>
                     </button>
                   ))}
+                </div>
+              </section>
+            )}
+
+            {coachMenu==="visitors" && (
+              <section style={{margin:"14px 0",padding:14,background:"rgba(255,255,255,.84)",border:"1px solid #b9d0da",borderRadius:12}}>
+                <h3 style={{marginTop:0}}>👁 Statistik Kunjungan</h3>
+                <div style={{padding:"18px 14px",borderRadius:14,background:"linear-gradient(145deg,#063d56,#087b72)",color:"#fff",textAlign:"center",boxShadow:"0 6px 18px rgba(0,43,64,.14)"}}>
+                  <div style={{fontSize:12,opacity:.9}}>TOTAL KUNJUNGAN SITUS</div>
+                  <div style={{fontSize:34,fontWeight:950,lineHeight:1.15,marginTop:5}}>{visitorCount.toLocaleString("id-ID")}</div>
+                  <div style={{fontSize:11,opacity:.88,marginTop:5}}>Setiap situs dibuka / reload dihitung sebagai 1 kunjungan.</div>
+                </div>
+                <div style={{fontSize:12,color:"#526b78",background:"#edf5f7",padding:10,borderRadius:9,marginTop:10,lineHeight:1.45}}>
+                  Statistik ini menggunakan data kunjungan nyata dari tabel <strong>site_visits</strong>. Perangkat yang sama dapat menambah hitungan lagi ketika situs dibuka kembali.
                 </div>
               </section>
             )}
@@ -4027,11 +4046,16 @@ const formattedSchedules = await Promise.all(
             fontSize:11,
             fontWeight:400,
             lineHeight:1.2,
-            textAlign:"left",
+            textAlign:"right",
+            display:"flex",
+            justifyContent:"flex-end",
+            alignItems:"center",
+            width:"100%",
+            boxSizing:"border-box",
             textShadow:"0 1px 3px rgba(0,0,0,.65)"
           }}
         >
-          👁 Pengunjung: {visitorCount.toLocaleString("id-ID")}
+          👁 Kunjungan: {visitorCount.toLocaleString("id-ID")}
         </div>
       )}
 
