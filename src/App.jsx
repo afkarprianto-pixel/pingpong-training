@@ -2749,6 +2749,226 @@ const formattedSchedules = await Promise.all(
           }
         }
 
+        /* =========================================================
+           FINAL HOME GLASS DESIGN
+           1) 3 info hero lebih kecil, tanpa panel kaca besar
+           2) 4 menu utama glass-card di atas background navy
+           3) Home-Chat pakai lingkaran biru besar & seragam
+        ========================================================= */
+
+        /* --- 3 INFO DI AREA FOTO --- */
+        .app.home-app .hero-feature-row-bottom{
+          background:transparent!important;
+          border:0!important;
+          box-shadow:none!important;
+          backdrop-filter:none!important;
+          -webkit-backdrop-filter:none!important;
+          padding:4px 6px!important;
+          bottom:12px!important;
+        }
+        .app.home-app .hero-feature-row-bottom>div{
+          gap:0!important;
+          line-height:1!important;
+        }
+        .app.home-app .hero-feature-row-bottom span{
+          width:31px!important;
+          height:31px!important;
+          min-width:31px!important;
+          border-radius:50%!important;
+          margin:0 0 2px!important;
+          font-size:15px!important;
+          background:rgba(2,69,116,.66)!important;
+          border:1px solid rgba(82,203,255,.72)!important;
+          box-shadow:0 4px 11px rgba(0,0,0,.17)!important;
+          backdrop-filter:blur(4px)!important;
+          -webkit-backdrop-filter:blur(4px)!important;
+        }
+        .app.home-app .hero-feature-row-bottom b{
+          margin:0!important;
+          font-size:8px!important;
+          line-height:1!important;
+        }
+        .app.home-app .hero-feature-row-bottom small{
+          margin:1px 0 0!important;
+          font-size:7px!important;
+          line-height:1!important;
+        }
+
+        /* --- AREA 4 MENU UTAMA: PUTIH DIGANTI NAVY MENYATU --- */
+        .app.home-app .home-modern-actions{
+          margin:0!important;
+          padding:12px 10px 11px!important;
+          background:
+            radial-gradient(circle at 12% 5%,rgba(35,188,255,.16),transparent 35%),
+            radial-gradient(circle at 88% 100%,rgba(25,213,176,.10),transparent 34%),
+            linear-gradient(180deg,#075a82 0%,#063f64 55%,#052f50 100%)!important;
+          border-top:1px solid rgba(127,219,255,.12)!important;
+        }
+        .app.home-app .home-modern-actions-grid{
+          gap:9px!important;
+        }
+
+        /* Keempat kartu memakai bahasa visual kaca yang sama */
+        .app.home-app .home-modern-action,
+        .app.home-app .home-modern-action.group-card,
+        .app.home-app .home-modern-action.private-card,
+        .app.home-app .home-modern-action.schedule-card-home,
+        .app.home-app .home-modern-action.payment-card{
+          min-height:72px!important;
+          padding:8px 29px 8px 10px!important;
+          border-radius:17px!important;
+          background:
+            linear-gradient(145deg,rgba(255,255,255,.17),rgba(255,255,255,.075))!important;
+          border:1px solid rgba(185,234,255,.34)!important;
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,.23),
+            0 7px 17px rgba(0,25,47,.18)!important;
+          backdrop-filter:blur(10px)!important;
+          -webkit-backdrop-filter:blur(10px)!important;
+          color:#fff!important;
+        }
+        .app.home-app .home-modern-action:before{
+          content:""!important;
+          position:absolute!important;
+          left:0!important;
+          top:0!important;
+          width:100%!important;
+          height:1px!important;
+          background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent)!important;
+          opacity:.7!important;
+        }
+        .app.home-app .home-modern-action-icon{
+          width:42px!important;
+          min-width:42px!important;
+          height:42px!important;
+          border-radius:13px!important;
+          background:rgba(3,50,83,.48)!important;
+          border:1px solid rgba(117,220,255,.38)!important;
+          box-shadow:inset 0 1px 0 rgba(255,255,255,.18)!important;
+          font-size:26px!important;
+        }
+        /* Aksen warna kecil, tanpa mengubah kartu menjadi solid */
+        .app.home-app .group-card .home-modern-action-icon{background:rgba(23,119,232,.40)!important}
+        .app.home-app .private-card .home-modern-action-icon{background:rgba(8,169,143,.38)!important}
+        .app.home-app .schedule-card-home .home-modern-action-icon{background:rgba(230,112,43,.38)!important}
+        .app.home-app .payment-card .home-modern-action-icon{background:rgba(120,73,218,.40)!important}
+        .app.home-app .home-modern-action-copy strong{
+          font-size:12px!important;
+          color:#fff!important;
+        }
+        .app.home-app .home-modern-action-copy small{
+          font-size:8.5px!important;
+          color:rgba(232,247,255,.88)!important;
+        }
+
+        /* --- NAV HOME SAMPAI CHAT --- */
+        .app.home-app .modern-bottom-nav{
+          background:linear-gradient(180deg,#052f50 0%,#031f38 100%)!important;
+          grid-template-columns:repeat(6,minmax(0,1fr))!important;
+          gap:1px!important;
+          padding:7px 3px 6px!important;
+          min-height:70px!important;
+          border-top:1px solid rgba(109,207,255,.18)!important;
+        }
+        .app.home-app .modern-bottom-item,
+        .app.home-app .modern-bottom-item.active{
+          height:58px!important;
+          min-height:58px!important;
+          padding:0!important;
+          gap:2px!important;
+          border:0!important;
+          border-radius:0!important;
+          background:transparent!important;
+          box-shadow:none!important;
+          backdrop-filter:none!important;
+          -webkit-backdrop-filter:none!important;
+          color:#fff!important;
+        }
+
+        /* Bungkus ikon bawaan dengan tampilan lingkaran biru.
+           Berlaku untuk img maupun elemen ikon pertama di tombol. */
+        .app.home-app .modern-bottom-item img{
+          width:40px!important;
+          height:40px!important;
+          max-width:40px!important;
+          max-height:40px!important;
+          min-width:40px!important;
+          min-height:40px!important;
+          box-sizing:border-box!important;
+          object-fit:contain!important;
+          padding:7px!important;
+          margin:0 auto 1px!important;
+          border-radius:50%!important;
+          background:rgba(4,80,133,.76)!important;
+          border:1px solid rgba(76,199,255,.68)!important;
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,.17),
+            0 4px 10px rgba(0,0,0,.18)!important;
+        }
+        .app.home-app .modern-bottom-item.active img{
+          background:rgba(6,107,174,.86)!important;
+          border-color:rgba(111,222,255,.88)!important;
+        }
+        .app.home-app .modern-bottom-item>div:last-child{
+          margin:0!important;
+          padding:0!important;
+          font-size:8.5px!important;
+          line-height:1!important;
+          font-weight:750!important;
+          color:#f2fbff!important;
+        }
+        .app.home-app .modern-bottom-item.active>div:last-child{
+          color:#8de7ff!important;
+        }
+
+        @media(max-width:600px){
+          .app.home-app .hero-feature-row-bottom{
+            width:82%!important;
+            bottom:10px!important;
+          }
+          .app.home-app .home-modern-actions{
+            padding:10px 8px 9px!important;
+          }
+          .app.home-app .home-modern-actions-grid{
+            gap:8px!important;
+          }
+          .app.home-app .home-modern-action,
+          .app.home-app .home-modern-action.group-card,
+          .app.home-app .home-modern-action.private-card,
+          .app.home-app .home-modern-action.schedule-card-home,
+          .app.home-app .home-modern-action.payment-card{
+            min-height:69px!important;
+            padding:7px 25px 7px 8px!important;
+          }
+          .app.home-app .home-modern-action-icon{
+            width:38px!important;
+            min-width:38px!important;
+            height:38px!important;
+            font-size:23px!important;
+          }
+          .app.home-app .modern-bottom-nav{
+            min-height:68px!important;
+            padding:6px 2px 5px!important;
+          }
+          .app.home-app .modern-bottom-item,
+          .app.home-app .modern-bottom-item.active{
+            height:57px!important;
+            min-height:57px!important;
+          }
+          .app.home-app .modern-bottom-item img{
+            width:38px!important;
+            height:38px!important;
+            min-width:38px!important;
+            min-height:38px!important;
+            max-width:38px!important;
+            max-height:38px!important;
+            padding:6px!important;
+          }
+          .app.home-app .modern-bottom-item>div:last-child{
+            font-size:8px!important;
+          }
+        }
+
       `}</style>
 
       {page === "admin" && (
