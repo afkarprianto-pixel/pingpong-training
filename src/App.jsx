@@ -661,6 +661,7 @@ function App() {
   const [migrationMember, setMigrationMember] = useState(null);
   const [migrationTargetId, setMigrationTargetId] = useState("");
   const [migrationBusy, setMigrationBusy] = useState(false);
+  const [coachScheduleType, setCoachScheduleType] = useState("Group");
   const [visitorMode, setVisitorMode] = useState(() => localStorage.getItem("pingtrn_visitor_mode") || "visits");
   const [deviceVisitorCount, setDeviceVisitorCount] = useState(0);
   const [privateRequests, setPrivateRequests] = useState([]);
@@ -3244,6 +3245,30 @@ const formattedSchedules = await Promise.all(
           margin-top:10px!important;
         }
 
+        /* ===== RUANG PELATIH / DAFTAR JADWAL ===== */
+        .coach-schedule-type-tabs{
+          display:grid;
+          grid-template-columns:1fr 1fr;
+          gap:7px;
+          margin:5px 0 10px;
+        }
+        .coach-schedule-type-tabs button{
+          min-height:39px;
+          padding:7px 10px;
+          border-radius:11px;
+          border:1px solid #b8d2de;
+          background:#fff;
+          color:#315568;
+          font-weight:900;
+          cursor:pointer;
+        }
+        .coach-schedule-type-tabs button.active{
+          background:#08799a;
+          border-color:#08799a;
+          color:#fff;
+          box-shadow:0 4px 11px rgba(8,121,154,.18);
+        }
+
       `}</style>
 
       {pricePopup && (() => {
@@ -3328,9 +3353,9 @@ const formattedSchedules = await Promise.all(
           {!authReady ? <p>Memeriksa akun...</p> : !isPelatih ? <p>Akses khusus pelatih. <button onClick={()=>setPage("login")}>Login</button></p> : <>
 
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,flexWrap:"wrap"}}>
-              <div>
-                <h2 style={{marginBottom:2}}>Ruang Pelatih</h2>
-                <div style={{fontSize:11,color:"#607d8b"}}>Pilih menu yang ingin dikelola.</div>
+              <div style={{display:"flex",flexDirection:"column",alignItems:"flex-start",textAlign:"left"}}>
+                <h2 style={{margin:"0 0 1px",padding:0,lineHeight:1.05}}>Ruang Pelatih</h2>
+                <div style={{fontSize:11,color:"#607d8b",margin:0,padding:0,lineHeight:1.1,textAlign:"left"}}>Pilih menu yang ingin dikelola.</div>
               </div>
               <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>
                 {coachMenu!=="home" && <button type="button" className="back-button" onClick={()=>{setCoachMenu("home");window.scrollTo(0,0);}}>← Ruang Pelatih</button>}
@@ -3690,7 +3715,11 @@ const formattedSchedules = await Promise.all(
             </>)}
 
             {coachMenu==="scheduleList" && (<>
-              <h3 style={{marginTop:12}}>Daftar Jadwal</h3>
+              <h3 style={{marginTop:12,marginBottom:5}}>Daftar Jadwal</h3>
+              <div className="coach-schedule-type-tabs">
+                <button type="button" className={coachScheduleType==="Group"?"active":""} onClick={()=>setCoachScheduleType("Group")}>👥 Jadwal Group</button>
+                <button type="button" className={coachScheduleType==="Private"?"active":""} onClick={()=>setCoachScheduleType("Private")}>🏓 Jadwal Private</button>
+              </div>
               <div style={{overflowX:"auto",maxHeight:430,overflowY:"auto",border:"1px solid #dbe5ed",borderRadius:10,marginTop:6}}>
                 <table style={{width:"100%",minWidth:1040,borderCollapse:"collapse",tableLayout:"fixed",fontSize:12.5,textAlign:"left"}}>
                   <colgroup>
@@ -3710,7 +3739,7 @@ const formattedSchedules = await Promise.all(
                     )}</tr>
                   </thead>
                   <tbody>
-                    {schedules.map((item,i)=>{
+                    {schedules.filter(item=>item.type===coachScheduleType).map((item,i)=>{
                       const cell={padding:"9px 8px",borderBottom:"1px solid #e2e8f0",whiteSpace:"nowrap",verticalAlign:"middle",textAlign:"left",boxSizing:"border-box",overflow:"hidden",textOverflow:"ellipsis"};
                       const pesertaJadwal=registrations.filter(r=>String(r.schedule_id)===String(item.id) && (!r.registration_status || r.registration_status==="Terdaftar"));
                       const semuaLunas=pesertaJadwal.length>0 && pesertaJadwal.every(r=>r.payment_status==="Lunas");
@@ -3747,11 +3776,11 @@ const formattedSchedules = await Promise.all(
 
                       </React.Fragment>;
                     })}
-                    {schedules.length===0 && <tr><td colSpan={9} style={{padding:20,textAlign:"center"}}>Belum ada jadwal.</td></tr>}
+                    {schedules.filter(item=>item.type===coachScheduleType).length===0 && <tr><td colSpan={9} style={{padding:20,textAlign:"center"}}>Belum ada jadwal {coachScheduleType}.</td></tr>}
                   </tbody>
                 </table>
               </div>
-              <p style={{fontSize:12,color:"#64748b"}}>Klik baris jadwal untuk membuka popup peserta: Nama | Level | Lunas / Belum Lunas. Nominal pembayaran tidak ditampilkan di Daftar Jadwal.</p>
+              <p style={{fontSize:12,color:"#64748b"}}>Klik baris jadwal untuk melihat peserta. Klik nama/data peserta lalu gunakan tombol <strong>⇄ Migrasi / Pindahkan Member</strong> untuk memindahkan ke jadwal lain yang masih memiliki slot.</p>
             </>)}
 
           </>}
