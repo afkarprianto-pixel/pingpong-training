@@ -3269,6 +3269,11 @@ const formattedSchedules = await Promise.all(
           box-shadow:0 4px 11px rgba(8,121,154,.18);
         }
 
+        /* ===== POPUP MIGRASI MEMBER - COMPACT ===== */
+        .migration-compact-fix{
+          font-size:12px!important;
+        }
+
       `}</style>
 
       {pricePopup && (() => {
@@ -5205,18 +5210,18 @@ const formattedSchedules = await Promise.all(
         const asal=schedules.find(s=>String(s.id)===String(migrationMember.schedule_id));
         const kandidat=schedules.filter(s=>String(s.id)!==String(migrationMember.schedule_id) && (!asal||s.type===asal.type) && s.activeRaw && !s.registrationClosed && jumlahPesertaJadwal(s.id)<Number(s.quota||1));
         return <div onClick={()=>setMigrationMember(null)} style={{position:"fixed",inset:0,zIndex:10002,background:"rgba(0,0,0,.58)",display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
-          <section onClick={e=>e.stopPropagation()} style={{width:"min(94vw,480px)",background:"#f5f8fa",color:"#102a3a",borderRadius:18,padding:16,boxShadow:"0 20px 60px rgba(0,0,0,.38)"}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><h3 style={{margin:0}}>⇄ Migrasi Member</h3><button type="button" onClick={()=>setMigrationMember(null)} style={{width:31,height:31,borderRadius:8,border:"1px solid #abc",background:"#fff"}}>×</button></div>
-            <p style={{fontSize:12,color:"#607583"}}>Pindahkan <strong>{migrationMember.name}</strong> tanpa daftar ulang.</p>
-            <div style={{background:"#e9f4f8",borderRadius:11,padding:10,fontSize:12,marginBottom:10}}><small>JADWAL SEKARANG</small><br/><strong>{asal?`${asal.type}${asal.type==="Group"?` ${asal.quota} orang`:""} • ${asal.day}, ${asal.time}`:"Tidak ditemukan"}</strong></div>
-            <label style={{display:"block",fontWeight:850,fontSize:12,marginBottom:5}}>Jadwal Tujuan</label>
-            <select value={migrationTargetId} onChange={e=>setMigrationTargetId(e.target.value)} style={{width:"100%",padding:11,border:"1px solid #a9c3cf",borderRadius:10}}>
+          <section onClick={e=>e.stopPropagation()} className="migration-compact-fix" style={{width:"min(92vw,390px)",maxHeight:"82vh",overflowY:"auto",background:"#f5f8fa",color:"#102a3a",borderRadius:15,padding:12,boxShadow:"0 18px 50px rgba(0,0,0,.32)"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><h3 style={{margin:0,fontSize:16,lineHeight:1.1}}>⇄ Migrasi Member</h3><button type="button" onClick={()=>setMigrationMember(null)} style={{width:31,height:31,borderRadius:8,border:"1px solid #abc",background:"#fff"}}>×</button></div>
+            <p style={{fontSize:10.5,color:"#607583",margin:"6px 0 8px"}}>Pindahkan <strong>{migrationMember.name}</strong> tanpa daftar ulang.</p>
+            <div style={{background:"#e9f4f8",borderRadius:9,padding:8,fontSize:10.5,marginBottom:8}}><small>JADWAL SEKARANG</small><br/><strong>{asal?`${asal.type}${asal.type==="Group"?` ${asal.quota} orang`:""} • ${asal.day}, ${asal.time}`:"Tidak ditemukan"}</strong></div>
+            <label style={{display:"block",fontWeight:850,fontSize:10.5,marginBottom:4}}>Jadwal Tujuan</label>
+            <select value={migrationTargetId} onChange={e=>setMigrationTargetId(e.target.value)} style={{width:"100%",padding:"8px 9px",border:"1px solid #a9c3cf",borderRadius:9,fontSize:10.5}}>
               <option value="">-- Pilih jadwal yang tersedia --</option>
               {kandidat.map(s=><option key={s.id} value={s.id}>{s.type}{s.type==="Group"?` ${s.quota} orang`:""} — {s.day}, {s.time} — {jumlahPesertaJadwal(s.id)}/{s.quota}</option>)}
             </select>
             {kandidat.length===0&&<p style={{fontSize:11,color:"#b45309",background:"#fff7e8",padding:8,borderRadius:9}}>Belum ada jadwal tujuan yang memiliki slot.</p>}
-            <p style={{fontSize:10.5,color:"#64748b",lineHeight:1.4}}>Group bisa pindah ke Group 3, 4, atau 6 orang. Private pindah ke Private. Tagihan lama dikosongkan agar dihitung ulang sesuai jadwal baru.</p>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1.4fr",gap:8,marginTop:12}}>
+            <p style={{fontSize:9.5,color:"#64748b",lineHeight:1.3,margin:"7px 0"}}>Group bisa pindah ke Group 3, 4, atau 6 orang. Private pindah ke Private. Tagihan lama dikosongkan agar dihitung ulang sesuai jadwal baru.</p>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1.4fr",gap:7,marginTop:9}}>
               <button type="button" onClick={()=>setMigrationMember(null)} style={{padding:10,borderRadius:10,border:"1px solid #abc",background:"#fff",fontWeight:800}}>Batal</button>
               <button type="button" disabled={!migrationTargetId||migrationBusy} onClick={konfirmasiMigrasiMember} style={{padding:10,borderRadius:10,border:0,background:"#08799a",color:"#fff",fontWeight:900,opacity:(!migrationTargetId||migrationBusy)?.55:1}}>{migrationBusy?"Memindahkan...":"Konfirmasi Pindah"}</button>
             </div>
