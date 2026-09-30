@@ -2582,6 +2582,173 @@ const formattedSchedules = await Promise.all(
           .app.home-app .home-modern-action-copy small{font-size:8.5px!important}
         }
 
+        /* ===== HOME POSITION FIX: feature bawah + nav seragam ===== */
+        .app.home-app .hero{position:relative!important;}
+        .app.home-app .hero-content{
+          height:100%!important;
+          box-sizing:border-box!important;
+          position:relative!important;
+        }
+        .app.home-app .hero-feature-row-bottom{
+          position:absolute!important;
+          left:50%!important;
+          transform:translateX(-50%)!important;
+          bottom:18px!important;
+          width:min(430px,88%)!important;
+          margin:0!important;
+          padding:10px 12px!important;
+          border-radius:18px!important;
+          background:rgba(3,39,67,.48)!important;
+          border:1px solid rgba(88,206,255,.24)!important;
+          backdrop-filter:blur(5px)!important;
+          -webkit-backdrop-filter:blur(5px)!important;
+          box-shadow:0 8px 22px rgba(0,0,0,.16)!important;
+        }
+
+        /* Semua tombol Home–Chat harus sama. Tidak ada kotak khusus Home. */
+        .app.home-app .modern-bottom-nav{
+          gap:2px!important;
+          padding:5px 6px!important;
+        }
+        .app.home-app .modern-bottom-item,
+        .app.home-app .modern-bottom-item.active{
+          width:100%!important;
+          height:52px!important;
+          min-height:52px!important;
+          padding:4px 1px!important;
+          margin:0!important;
+          border:1px solid transparent!important;
+          border-radius:10px!important;
+          background:transparent!important;
+          box-shadow:none!important;
+          outline:none!important;
+          color:#fff!important;
+          backdrop-filter:none!important;
+          -webkit-backdrop-filter:none!important;
+          transform:none!important;
+        }
+        .app.home-app .modern-bottom-item.active{
+          color:#83dcff!important;
+        }
+
+        @media(max-width:600px){
+          .app.home-app .hero-feature-row-bottom{
+            bottom:14px!important;
+            width:88%!important;
+            padding:8px 7px!important;
+          }
+          .app.home-app .hero-feature-row-bottom span{
+            width:36px!important;height:36px!important;font-size:18px!important;
+          }
+          .app.home-app .modern-bottom-item,
+          .app.home-app .modern-bottom-item.active{
+            height:50px!important;min-height:50px!important;
+          }
+        }
+
+        /* ===== FINAL RAPAT IKON HERO + NAV HOME-CHAT ===== */
+        .app.home-app .hero-feature-row-bottom{
+          padding:8px 10px 7px!important;
+          align-items:center!important;
+        }
+        .app.home-app .hero-feature-row-bottom>div{
+          display:flex!important;
+          flex-direction:column!important;
+          align-items:center!important;
+          justify-content:center!important;
+          gap:0!important;
+          line-height:1!important;
+        }
+        .app.home-app .hero-feature-row-bottom span{
+          margin:0 0 3px!important;
+        }
+        .app.home-app .hero-feature-row-bottom b{
+          display:block!important;
+          margin:0!important;
+          padding:0!important;
+          line-height:1.05!important;
+          font-size:9px!important;
+        }
+        .app.home-app .hero-feature-row-bottom small{
+          display:block!important;
+          margin:2px 0 0!important;
+          padding:0!important;
+          line-height:1.05!important;
+          font-size:8px!important;
+        }
+
+        /* Home sampai Chat: ukuran, jarak, dan bentuk semuanya sama */
+        .app.home-app .modern-bottom-nav{
+          display:grid!important;
+          grid-template-columns:repeat(6,minmax(0,1fr))!important;
+          gap:0!important;
+          padding:5px 4px 4px!important;
+          min-height:58px!important;
+          align-items:center!important;
+        }
+        .app.home-app .modern-bottom-item,
+        .app.home-app .modern-bottom-item.active{
+          width:100%!important;
+          min-width:0!important;
+          height:50px!important;
+          min-height:50px!important;
+          margin:0!important;
+          padding:2px 0!important;
+          border:0!important;
+          border-radius:0!important;
+          background:transparent!important;
+          box-shadow:none!important;
+          outline:none!important;
+          display:flex!important;
+          flex-direction:column!important;
+          align-items:center!important;
+          justify-content:center!important;
+          gap:1px!important;
+          color:#fff!important;
+          transform:none!important;
+          filter:none!important;
+          backdrop-filter:none!important;
+          -webkit-backdrop-filter:none!important;
+        }
+        .app.home-app .modern-bottom-item.active{
+          color:#8de7ff!important;
+        }
+        .app.home-app .modern-bottom-item img{
+          display:block!important;
+          margin:0 auto 1px!important;
+          padding:0!important;
+          max-height:29px!important;
+          object-fit:contain!important;
+        }
+        .app.home-app .modern-bottom-item>div{
+          margin:0!important;
+          padding:0!important;
+          line-height:1.05!important;
+          font-size:9px!important;
+          font-weight:700!important;
+        }
+
+        @media(max-width:600px){
+          .app.home-app .hero-feature-row-bottom{
+            padding:7px 7px 6px!important;
+          }
+          .app.home-app .hero-feature-row-bottom span{
+            margin-bottom:2px!important;
+          }
+          .app.home-app .hero-feature-row-bottom small{
+            margin-top:1px!important;
+          }
+          .app.home-app .modern-bottom-nav{
+            min-height:56px!important;
+            padding:4px 3px 3px!important;
+          }
+          .app.home-app .modern-bottom-item,
+          .app.home-app .modern-bottom-item.active{
+            height:48px!important;
+            min-height:48px!important;
+          }
+        }
+
       `}</style>
 
       {page === "admin" && (
@@ -3051,7 +3218,7 @@ const formattedSchedules = await Promise.all(
                 <h2 className="modern-hero-title">Latihan<br/>Lebih Teratur,<br/><span>Progress<br/>Lebih Terukur</span></h2>
                 <div className="modern-hero-sub">Bersama Coach Profesional<br/>untuk Semua Level Pemain</div>
               </div>
-              <div className="hero-feature-row">
+              <div className="hero-feature-row hero-feature-row-bottom">
                 <div><span>📅</span><b>Jadwal</b><small>Terstruktur</small></div>
                 <div><span>📈</span><b>Progress</b><small>Terpantau</small></div>
                 <div><span>🏓</span><b>Coach</b><small>Profesional</small></div>
