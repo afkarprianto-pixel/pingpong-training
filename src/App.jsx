@@ -486,6 +486,32 @@ function App() {
     alert("Data peserta berhasil diperbarui.");
   }
 
+  function bukaMigrasiMember(r) {
+    if (!isPelatih || !r) return;
+    setMigrationMember(r); setMigrationTargetId("");
+    setParticipantPopup(null); setSchedulePopup(null);
+  }
+
+  async function konfirmasiMigrasiMember() {
+    if (!isPelatih || !migrationMember || !migrationTargetId || migrationBusy) return;
+    const asal=schedules.find(s=>String(s.id)===String(migrationMember.schedule_id));
+    const tujuan=schedules.find(s=>String(s.id)===String(migrationTargetId));
+    if(!tujuan){alert("Jadwal tujuan tidak ditemukan.");return;}
+    if(String(tujuan.id)===String(migrationMember.schedule_id)){alert("Pilih jadwal tujuan yang berbeda.");return;}
+    if(asal && tujuan.type!==asal.type){alert("Group hanya dipindahkan ke Group dan Private hanya ke Private.");return;}
+    if(jumlahPesertaJadwal(tujuan.id)>=Number(tujuan.quota||1)){alert("Jadwal tujuan sudah penuh.");return;}
+    const dari=asal?`${asal.type}${asal.type==="Group"?` ${asal.quota} orang`:""} • ${asal.day}, ${asal.time}`:"Jadwal lama";
+    const ke=`${tujuan.type}${tujuan.type==="Group"?` ${tujuan.quota} orang`:""} • ${tujuan.day}, ${tujuan.time}`;
+    if(!window.confirm(`Pindahkan ${migrationMember.name}?\n\nDari: ${dari}\nKe: ${ke}`))return;
+    setMigrationBusy(true);
+    const {error}=await supabase.from("registrations").update({schedule_id:tujuan.id,training_type:tujuan.type,invoice_amount:null}).eq("id",migrationMember.id);
+    setMigrationBusy(false);
+    if(error){alert("Gagal memindahkan member: "+error.message);return;}
+    setMigrationMember(null);setMigrationTargetId("");
+    await loadRegistrations();await loadSchedules();
+    alert("Member berhasil dipindahkan ke jadwal baru.");
+  }
+
   function nomorWhatsAppIndonesia(value) {
     let n = String(value || "").replace(/\D/g, "");
     if (n.startsWith("0")) n = "62" + n.slice(1);
@@ -584,7 +610,7 @@ function App() {
     if (scheduleForm.start_time >= scheduleForm.end_time) { alert("Jam selesai harus setelah jam mulai."); return; }
 
     const jamTerpilih = [1,2,3].includes(durasiJam(scheduleForm.start_time,scheduleForm.end_time)) ? durasiJam(scheduleForm.start_time,scheduleForm.end_time) : 2;
-    const payload = { ...scheduleForm, registration_closed: editId ? schedules.find(j=>j.id===editId)?.registrationClosed ?? false : false, end_time: selesaiDariDurasi(scheduleForm.start_time,jamTerpilih), coach_rate: Number(scheduleForm.coach_rate)||0, rental_rate_per_hour: Number(scheduleForm.rental_rate_per_hour)||0, quota: scheduleForm.type === "Private" ? 1 : 4, min_participants: scheduleForm.type === "Private" ? 1 : 3 };
+    const payload = { ...scheduleForm, registration_closed: editId ? schedules.find(j=>j.id===editId)?.registrationClosed ?? false : false, end_time: selesaiDariDurasi(scheduleForm.start_time,jamTerpilih), coach_rate: Number(scheduleForm.coach_rate)||0, rental_rate_per_hour: Number(scheduleForm.rental_rate_per_hour)||0, quota: scheduleForm.type === "Private" ? 1 : Number(scheduleForm.quota || 4), min_participants: scheduleForm.type === "Private" ? 1 : Number(scheduleForm.quota || 4) };
 
     setSavingSchedule(true);
 
@@ -618,7 +644,7 @@ function App() {
 
     if (countError) {alert("Tidak dapat memeriksa pendaftaran. Jadwal tidak dihapus."); return;}
 
-    if (Number(count)>0) {alert("Jadwal memiliki pendaftar. Nonaktifkan saja agar data peserta tetap aman."); return;}
+    if (Number(count)>0) {alert("Jadwal masih memiliki member. Migrasikan atau batalkan member terlebih dahulu. Setelah kosong, jadwal dapat dihapus."); return;}
 
     const {error} = await supabase.from("schedule").delete().eq("id",item.id);
 
@@ -632,6 +658,9 @@ function App() {
   const [registrationProgram, setRegistrationProgram] = useState("Group");
   const [selectedGroupSize, setSelectedGroupSize] = useState(3);
   const [pricePopup, setPricePopup] = useState(null);
+  const [migrationMember, setMigrationMember] = useState(null);
+  const [migrationTargetId, setMigrationTargetId] = useState("");
+  const [migrationBusy, setMigrationBusy] = useState(false);
   const [visitorMode, setVisitorMode] = useState(() => localStorage.getItem("pingtrn_visitor_mode") || "visits");
   const [deviceVisitorCount, setDeviceVisitorCount] = useState(0);
   const [privateRequests, setPrivateRequests] = useState([]);
@@ -3249,7 +3278,7 @@ const formattedSchedules = await Promise.all(
                         setPricePopup(null);
                         setPage("pendaftaran");
                         window.scrollTo(0,0);
-                      }}>{isGroup ? "Lanjut Pilih Jadwal" : "Lanjut Pilih Program"}</button>
+                      }}>Lanjut Pilih Jadwal</button>
                     </div>
                   </>
                 )}
@@ -3377,9 +3406,14 @@ const formattedSchedules = await Promise.all(
                 </select>
                 <p style={{fontSize:13}}>Jam selesai otomatis: {selesaiDariDurasi(scheduleForm.start_time,[1,2,3].includes(durasiJam(scheduleForm.start_time,scheduleForm.end_time))?durasiJam(scheduleForm.start_time,scheduleForm.end_time):2)}</p>
               </div>
-              <div className="form-group"><label>Jenis Latihan</label><select value={scheduleForm.type} onChange={e=>setScheduleForm(p=>({...p,type:e.target.value,coach_rate:e.target.value==="Private"?350000:300000,quota:e.target.value==="Private"?1:4,min_participants:e.target.value==="Private"?1:3}))}><option value="Group">Group (3–4 Orang)</option><option value="Private">Private (1 Orang)</option></select></div>
-
-              <p>Kapasitas: {scheduleForm.type === "Private" ? "1 orang" : "minimal 3, maksimal 4 orang"}</p>
+              <div className="form-group"><label>Jenis Latihan</label><select value={scheduleForm.type} onChange={e=>setScheduleForm(p=>({...p,type:e.target.value,coach_rate:e.target.value==="Private"?350000:300000,quota:e.target.value==="Private"?1:4,min_participants:e.target.value==="Private"?1:4}))}><option value="Group">Group</option><option value="Private">Private (1 Orang)</option></select></div>
+              {scheduleForm.type==="Group" ? <div className="form-group">
+                <label>Kapasitas Group</label>
+                <select value={Number(scheduleForm.quota||4)} onChange={e=>setScheduleForm(p=>({...p,quota:Number(e.target.value),min_participants:Number(e.target.value)}))}>
+                  <option value={3}>Group 3 Orang</option><option value={4}>Group 4 Orang</option><option value={6}>Group 6 Orang</option>
+                </select>
+                <p style={{fontSize:12,color:"#64748b",margin:"5px 0 0"}}>Pilih kapasitas untuk jadwal ini.</p>
+              </div> : <p>Kapasitas: 1 orang (Private)</p>}
 
               <div className="form-group"><label>Pelatih</label><input value={scheduleForm.coach} required onChange={e=>setScheduleForm(p=>({...p,coach:e.target.value}))}/></div>
 
@@ -3673,7 +3707,7 @@ const formattedSchedules = await Promise.all(
                               <button type="button" className="back-button" onClick={()=>toggleSchedule(item)}>{item.activeRaw?"Nonaktifkan":"Aktifkan"}</button>
                               {!item.registrationClosed && item.registered===3 &&
                                 <button type="button" className="back-button" onClick={()=>tutupPendaftaran(item)}>Tutup Pendaftaran</button>}
-                              <button type="button" className="back-button" onClick={()=>deleteSchedule(item)}>Hapus</button>
+                              <button type="button" className="back-button" onClick={()=>deleteSchedule(item)} style={{borderColor:"#b42318",color:"#b42318"}}>Hapus Jadwal</button>
                             </div>
                           </td>
                         </tr>
@@ -4438,7 +4472,7 @@ const formattedSchedules = await Promise.all(
                 <div>
                   <small>PRIVATE TRAINING</small>
                   <h3>Latihan Private</h3>
-                  <p>Pilih fokus latihan dan kirim pengajuan langsung ke Coach.</p>
+                  <p>Pilih fokus latihan dan jadwal Private yang sudah disediakan Coach.</p>
                 </div>
               </section>
             )}
@@ -4472,18 +4506,15 @@ const formattedSchedules = await Promise.all(
                     <button className="choose-btn" disabled={!item.available} onClick={()=>chooseSchedule(item)}>{item.available?"Pilih Group & Daftar":"Penuh / Ditutup"}</button>
                   </div>)}
               </div>
-            </> : <section className="private-request-modern">
-              <div className="private-request-head">
-                <div><span>PRIVATE TRAINING</span><h3>Pengajuan Latihan Private</h3></div>
-                <div className="private-request-badge">1 Peserta</div>
-              </div>
-              <p className="private-request-intro">Pilih fokus latihan, lalu tuliskan kebutuhan Anda. Pesan akan masuk langsung ke Ruang Pelatih dan tidak tampil di Chat Publik.</p>
-
-              {!privateThreadId ? <form onSubmit={mulaiPengajuanPrivate}>
-                <div className="form-group"><label>Nama</label><input required placeholder="Nama Anda" value={privateName} onChange={e=>setPrivateName(e.target.value)}/></div>
-
+            </> : <>
+              <section className="private-request-modern">
+                <div className="private-request-head">
+                  <div><span>PRIVATE TRAINING</span><h3>Pilih Program & Jadwal Private</h3></div>
+                  <div className="private-request-badge">1 Peserta</div>
+                </div>
+                <p className="private-request-intro">Pilih fokus latihan, lalu pilih slot Private yang sudah dibuat Coach. Untuk negosiasi atau informasi tambahan gunakan WhatsApp Coach.</p>
                 <div className="private-program-block">
-                  <label>Pilih Program Latihan</label>
+                  <label>Pilih Fokus Latihan</label>
                   <div className="private-program-list">
                     {[
                       ["Teknik Dasar","Servis, receive, stroke dasar & footwork","🏓"],
@@ -4493,37 +4524,24 @@ const formattedSchedules = await Promise.all(
                       ["Menghadapi Pemain Bintik","Strategi dan pola menghadapi bintik","🎯"],
                       ["Persiapan Turnamen","Game plan & simulasi pertandingan","🏆"],
                       ["Program Khusus","Materi sesuai kebutuhan Anda","⚙️"]
-                    ].map(([title,desc,icon])=><button key={title} type="button"
-                      className={`private-program-option ${privateProgram===title?"active":""}`}
-                      onClick={()=>setPrivateProgram(title)}>
-                      <span className="private-program-radio">{privateProgram===title?"●":"○"}</span>
-                      <span className="private-program-icon">{icon}</span>
-                      <span><strong>{title}</strong><small>{desc}</small></span>
+                    ].map(([title,desc,icon])=><button key={title} type="button" className={`private-program-option ${privateProgram===title?"active":""}`} onClick={()=>setPrivateProgram(title)}>
+                      <span className="private-program-radio">{privateProgram===title?"●":"○"}</span><span className="private-program-icon">{icon}</span><span><strong>{title}</strong><small>{desc}</small></span>
                     </button>)}
                   </div>
                 </div>
-
-                <div className="coach-message-box">
-                  <div className="coach-message-title"><span>💬</span><div><strong>Pesan Untuk Coach</strong><small>Opsional detail kebutuhan, target, hari atau jam yang diinginkan</small></div></div>
-                  <textarea required rows={5} maxLength={500} placeholder="Contoh: Coach, saya ingin fokus latihan servis dan receive. Kalau bisa hari Sabtu jam 18.00–20.00. Terima kasih Coach 🙏" value={privateMessage} onChange={e=>setPrivateMessage(e.target.value)}/>
-                  <div className="coach-message-count">{privateMessage.length}/500</div>
+                <div className="day-filter">{days.map(day=><button key={day} className={selectedDay===day?"active":""} onClick={()=>setSelectedDay(day)}>{day}</button>)}</div>
+                <div className="schedule-grid">
+                  {filteredSchedules.filter(item=>item.type==="Private").length===0 ? <div style={{textAlign:"center",gridColumn:"1/-1",background:"#fff",padding:20,borderRadius:14}}>Belum ada jadwal Private tersedia.</div> :
+                    filteredSchedules.filter(item=>item.type==="Private").map(item=><div className="schedule-card" key={item.id}>
+                      <div className="schedule-top"><span className="day">{item.day}</span><span className="time">{item.time}</span></div>
+                      <div className="coach">PRIVATE • {item.registered}/1 peserta</div>
+                      <div style={{fontSize:11,color:"#64748b",margin:"7px 0"}}>Fokus: <strong>{privateProgram}</strong></div>
+                      <button className="choose-btn" disabled={!item.available} onClick={()=>chooseSchedule(item)}>{item.available?"Pilih Jadwal & Daftar":"Penuh / Ditutup"}</button>
+                    </div>)}
                 </div>
-                <button className="register-submit modern-private-submit" disabled={privateRequestBusy}>{privateRequestBusy?"Mengirim...":"Kirim Pengajuan Private  ›"}</button>
-                <button type="button" className="back-button" style={{width:"100%",marginTop:8}} onClick={bukaPercakapanPrivateSaya}>Buka Percakapan Saya</button>
-              </form> : <>
-                <div style={{background:"#eef4f6",borderRadius:12,padding:10,maxHeight:330,overflowY:"auto",display:"grid",gap:8}}>
-                  {privateThreadMessages.map(m=><div key={m.id} style={{maxWidth:"86%",justifySelf:m.sender_type==="member"?"end":"start",background:m.sender_type==="member"?"#d8f4e8":"#fff",border:"1px solid #d6e1e6",borderRadius:12,padding:"8px 10px"}}>
-                    <div style={{fontSize:10,fontWeight:900,color:"#087b72"}}>{m.sender_type==="coach"?"Coach Teguh":m.sender_name}</div>
-                    <div style={{fontSize:13,whiteSpace:"pre-wrap"}}>{m.message}</div>
-                  </div>)}
-                </div>
-                <div style={{display:"flex",gap:7,marginTop:8}}>
-                  <input value={privateReplyText} onChange={e=>setPrivateReplyText(e.target.value)} placeholder="Tulis balasan... misalnya nomor WA atau OK" style={{flex:1,padding:10,border:"1px solid #b8cbd5",borderRadius:9}}/>
-                  <button type="button" className="register-submit" style={{width:"auto"}} disabled={privateRequestBusy} onClick={()=>kirimPesanPrivate("member",privateName || "Member")}>Kirim</button>
-                </div>
-                <button type="button" className="back-button" style={{width:"100%",marginTop:8}} onClick={()=>{setPrivateThreadId(null);setPrivateThreadMessages([]);}}>Pengajuan Baru</button>
-              </>}
-            </section>}
+                <button type="button" className="back-button" style={{width:"100%",marginTop:10}} onClick={()=>window.open("https://wa.me/6285814466929","_blank","noopener,noreferrer")}>💬 Hubungi Coach via WhatsApp</button>
+              </section>
+            </>            </section>}
           </div>
         </main>
       )}
@@ -5098,6 +5116,29 @@ const formattedSchedules = await Promise.all(
         </div>
       )}
 
+      {migrationMember && (()=>{
+        const asal=schedules.find(s=>String(s.id)===String(migrationMember.schedule_id));
+        const kandidat=schedules.filter(s=>String(s.id)!==String(migrationMember.schedule_id) && (!asal||s.type===asal.type) && s.activeRaw && !s.registrationClosed && jumlahPesertaJadwal(s.id)<Number(s.quota||1));
+        return <div onClick={()=>setMigrationMember(null)} style={{position:"fixed",inset:0,zIndex:10002,background:"rgba(0,0,0,.58)",display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+          <section onClick={e=>e.stopPropagation()} style={{width:"min(94vw,480px)",background:"#f5f8fa",color:"#102a3a",borderRadius:18,padding:16,boxShadow:"0 20px 60px rgba(0,0,0,.38)"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><h3 style={{margin:0}}>⇄ Migrasi Member</h3><button type="button" onClick={()=>setMigrationMember(null)} style={{width:31,height:31,borderRadius:8,border:"1px solid #abc",background:"#fff"}}>×</button></div>
+            <p style={{fontSize:12,color:"#607583"}}>Pindahkan <strong>{migrationMember.name}</strong> tanpa daftar ulang.</p>
+            <div style={{background:"#e9f4f8",borderRadius:11,padding:10,fontSize:12,marginBottom:10}}><small>JADWAL SEKARANG</small><br/><strong>{asal?`${asal.type}${asal.type==="Group"?` ${asal.quota} orang`:""} • ${asal.day}, ${asal.time}`:"Tidak ditemukan"}</strong></div>
+            <label style={{display:"block",fontWeight:850,fontSize:12,marginBottom:5}}>Jadwal Tujuan</label>
+            <select value={migrationTargetId} onChange={e=>setMigrationTargetId(e.target.value)} style={{width:"100%",padding:11,border:"1px solid #a9c3cf",borderRadius:10}}>
+              <option value="">-- Pilih jadwal yang tersedia --</option>
+              {kandidat.map(s=><option key={s.id} value={s.id}>{s.type}{s.type==="Group"?` ${s.quota} orang`:""} — {s.day}, {s.time} — {jumlahPesertaJadwal(s.id)}/{s.quota}</option>)}
+            </select>
+            {kandidat.length===0&&<p style={{fontSize:11,color:"#b45309",background:"#fff7e8",padding:8,borderRadius:9}}>Belum ada jadwal tujuan yang memiliki slot.</p>}
+            <p style={{fontSize:10.5,color:"#64748b",lineHeight:1.4}}>Group bisa pindah ke Group 3, 4, atau 6 orang. Private pindah ke Private. Tagihan lama dikosongkan agar dihitung ulang sesuai jadwal baru.</p>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1.4fr",gap:8,marginTop:12}}>
+              <button type="button" onClick={()=>setMigrationMember(null)} style={{padding:10,borderRadius:10,border:"1px solid #abc",background:"#fff",fontWeight:800}}>Batal</button>
+              <button type="button" disabled={!migrationTargetId||migrationBusy} onClick={konfirmasiMigrasiMember} style={{padding:10,borderRadius:10,border:0,background:"#08799a",color:"#fff",fontWeight:900,opacity:(!migrationTargetId||migrationBusy)?.55:1}}>{migrationBusy?"Memindahkan...":"Konfirmasi Pindah"}</button>
+            </div>
+          </section>
+        </div>;
+      })()}
+
       {participantPopup && (
         <div onClick={()=>setParticipantPopup(null)} style={{position:"fixed",inset:0,zIndex:9999,background:"rgba(0,0,0,.55)",display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
           <section onClick={e=>e.stopPropagation()} style={{width:"min(94vw,520px)",maxHeight:"86vh",overflowY:"auto",background:"#f3f5f6",color:"#102a3a",borderRadius:16,padding:16,boxShadow:"0 18px 55px rgba(0,0,0,.35)"}}>
@@ -5121,9 +5162,10 @@ const formattedSchedules = await Promise.all(
               {schedules.map(s=><option key={s.id} value={s.id}>{s.day}, {s.time} — {s.type}</option>)}
             </select>
             {isPelatih && (!participantPopup.registration_status || participantPopup.registration_status === "Terdaftar") && (
-              <button type="button" onClick={()=>batalkanPesertaCoach(participantPopup)} style={{width:"100%",marginTop:12,padding:9,borderRadius:9,border:"1px solid #b42318",background:"#fff1f0",color:"#b42318",fontWeight:900,cursor:"pointer"}}>
-                Batalkan Pendaftaran
-              </button>
+              <div style={{display:"grid",gap:7,marginTop:12}}>
+                <button type="button" onClick={()=>bukaMigrasiMember(participantPopup)} style={{width:"100%",padding:10,borderRadius:9,border:"1px solid #08799a",background:"#e8f6fb",color:"#07516d",fontWeight:900,cursor:"pointer"}}>⇄ Migrasi / Pindahkan Member</button>
+                <button type="button" onClick={()=>batalkanPesertaCoach(participantPopup)} style={{width:"100%",padding:9,borderRadius:9,border:"1px solid #b42318",background:"#fff1f0",color:"#b42318",fontWeight:900,cursor:"pointer"}}>Batalkan Pendaftaran</button>
+              </div>
             )}
             <div style={{display:"flex",gap:8,marginTop:10}}>
               <button type="button" onClick={()=>setParticipantPopup(null)} style={{flex:1,padding:10,borderRadius:9,border:"1px solid #9fb2bd",background:"#fff",fontWeight:800}}>Tutup</button>
