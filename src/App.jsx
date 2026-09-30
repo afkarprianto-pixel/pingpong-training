@@ -1729,6 +1729,124 @@ const formattedSchedules = await Promise.all(
         }
 
 
+
+        /* =========================================================
+           HOME CARDS 2026 - tampilan lebih modern / premium
+        ========================================================= */
+        .home-modern-actions{
+          background:
+            radial-gradient(circle at 12% 0%,rgba(63,210,255,.16),transparent 34%),
+            radial-gradient(circle at 88% 100%,rgba(32,214,155,.13),transparent 32%),
+            linear-gradient(180deg,#075d84 0%,#064d72 100%) !important;
+          padding:10px 12px 9px !important;
+        }
+        .home-modern-actions-grid{
+          max-width:1050px !important;
+          margin:0 auto !important;
+          display:grid !important;
+          grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+          gap:10px !important;
+        }
+        .home-modern-action{
+          position:relative;
+          overflow:hidden;
+          isolation:isolate;
+          min-height:66px !important;
+          padding:9px 42px 9px 12px !important;
+          gap:10px !important;
+          border:1px solid rgba(255,255,255,.28) !important;
+          border-radius:18px !important;
+          background:rgba(255,255,255,.10) !important;
+          backdrop-filter:blur(10px);
+          -webkit-backdrop-filter:blur(10px);
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,.26),
+            0 9px 22px rgba(0,28,50,.22) !important;
+          transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease !important;
+        }
+        .home-modern-action::before{
+          content:"";
+          position:absolute;
+          z-index:-1;
+          width:110px;
+          height:110px;
+          right:-42px;
+          top:-58px;
+          border-radius:50%;
+          background:rgba(255,255,255,.12);
+        }
+        .home-modern-action:hover{
+          transform:translateY(-2px);
+          border-color:rgba(255,255,255,.48) !important;
+          box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 12px 26px rgba(0,28,50,.28) !important;
+        }
+        .home-modern-action.group-card{
+          background:linear-gradient(135deg,rgba(0,153,204,.92),rgba(0,91,145,.92)) !important;
+        }
+        .home-modern-action.private-card{
+          background:linear-gradient(135deg,rgba(18,166,132,.94),rgba(3,105,112,.94)) !important;
+        }
+        .home-modern-action.schedule-card{
+          background:linear-gradient(135deg,rgba(58,112,196,.94),rgba(27,69,135,.94)) !important;
+        }
+        .home-modern-action.payment-card{
+          background:linear-gradient(135deg,rgba(121,88,196,.94),rgba(65,58,139,.94)) !important;
+        }
+        .home-modern-action-icon{
+          width:42px !important;
+          min-width:42px !important;
+          height:42px !important;
+          border-radius:13px;
+          background:rgba(255,255,255,.16);
+          border:1px solid rgba(255,255,255,.18);
+          font-size:26px !important;
+          box-shadow:inset 0 1px 0 rgba(255,255,255,.18);
+        }
+        .home-modern-action-copy{
+          min-width:0;
+          flex:1;
+        }
+        .home-modern-action-copy strong{
+          font-size:15px !important;
+          font-weight:900 !important;
+          letter-spacing:.1px;
+        }
+        .home-modern-action-copy small{
+          font-size:10px !important;
+          opacity:.88 !important;
+          margin-top:4px !important;
+        }
+        .home-modern-action-arrow{
+          position:absolute;
+          right:14px;
+          top:50%;
+          transform:translateY(-52%);
+          font-size:28px;
+          line-height:1;
+          font-weight:300;
+          color:rgba(255,255,255,.82);
+        }
+        @media(max-width:600px){
+          .home-modern-actions{padding:8px 8px 7px !important;}
+          .home-modern-actions-grid{gap:7px !important;}
+          .home-modern-action{
+            min-height:64px !important;
+            padding:8px 27px 8px 8px !important;
+            gap:7px !important;
+            border-radius:15px !important;
+          }
+          .home-modern-action-icon{
+            width:34px !important;
+            min-width:34px !important;
+            height:34px !important;
+            border-radius:10px;
+            font-size:22px !important;
+          }
+          .home-modern-action-copy strong{font-size:11.5px !important;}
+          .home-modern-action-copy small{font-size:8px !important;line-height:1.15;}
+          .home-modern-action-arrow{right:9px;font-size:22px;}
+        }
+
         /* =========================================================
            FINAL HOME: FOTO LEBIH FULL + MENU TURUN + WA HANYA FOOTER
         ========================================================= */
@@ -2704,27 +2822,47 @@ const formattedSchedules = await Promise.all(
           >
             <div className="hero-content" style={{maxWidth:610,padding:0,width:"100%",margin:"0 auto",textAlign:"center"}}>
               <div className="hero-label" style={{fontSize:"clamp(9px,2.3vw,11px)",marginBottom:4,padding:"5px 10px"}}>🏓 PROGRAM LATIHAN TENIS MEJA</div>
-              <h2 style={{fontSize:"clamp(23px,5.7vw,36px)",lineHeight:1.02,margin:"4px 0 6px"}}>Latihan Lebih Teratur,<br/><span>Progress Lebih Terukur.</span></h2>
-              <div className="hero-description" style={{position:"static",width:"100%",textAlign:"center",fontSize:"clamp(11px,2.3vw,14px)",lineHeight:1.45,color:"#fff",textShadow:"0 2px 5px rgba(0,0,0,.75)"}}>
-                Program latihan tenis meja untuk semua level, dengan pilihan Private maupun Grup 3–4 orang dan jadwal yang fleksibel.
-              </div>
+              <h2 style={{fontSize:"clamp(23px,5.7vw,36px)",lineHeight:1.02,margin:"4px 0 6px",fontWeight:950,textShadow:"0 3px 10px rgba(0,0,0,.48)"}}>Latihan Lebih Teratur,<br/><span>Progress Lebih Terukur.</span></h2>
 
             </div>
           </section>
 
           <section className="quick-actions home-modern-actions">
             <div className="home-modern-actions-grid">
-              <button className="home-modern-action blue" type="button" onClick={()=>setPage("pendaftaran")}>
-                <span className="home-modern-action-icon">📝</span><span className="home-modern-action-copy"><strong>Pendaftaran</strong><small>Daftar jadi peserta</small></span>
+              <button className="home-modern-action group-card" type="button" onClick={()=>{setRegistrationProgram("Group");setPage("pendaftaran");window.scrollTo(0,0);}}>
+                <span className="home-modern-action-icon">👥</span>
+                <span className="home-modern-action-copy">
+                  <strong>Latihan Group</strong>
+                  <small>Pilih paket & jadwal latihan</small>
+                </span>
+                <span className="home-modern-action-arrow">›</span>
               </button>
-              <button className="home-modern-action green" type="button" onClick={()=>setPage("jadwal")}>
-                <span className="home-modern-action-icon">📅</span><span className="home-modern-action-copy"><strong>Daftar Jadwal</strong><small>Lihat hari & jam</small></span>
+
+              <button className="home-modern-action private-card" type="button" onClick={()=>{setRegistrationProgram("Private");setPage("pendaftaran");window.scrollTo(0,0);}}>
+                <span className="home-modern-action-icon">🏓</span>
+                <span className="home-modern-action-copy">
+                  <strong>Latihan Private</strong>
+                  <small>Lebih fokus bersama Coach</small>
+                </span>
+                <span className="home-modern-action-arrow">›</span>
               </button>
-              <button className="home-modern-action blue" type="button" onClick={()=>setPage("pembayaran")}>
-                <span className="home-modern-action-icon">💳</span><span className="home-modern-action-copy"><strong>Pembayaran</strong><small>Informasi pembayaran</small></span>
+
+              <button className="home-modern-action schedule-card" type="button" onClick={()=>setPage("jadwal")}>
+                <span className="home-modern-action-icon">📅</span>
+                <span className="home-modern-action-copy">
+                  <strong>Daftar Jadwal</strong>
+                  <small>Lihat hari & jam tersedia</small>
+                </span>
+                <span className="home-modern-action-arrow">›</span>
               </button>
-              <button className="home-modern-action green" type="button" onClick={()=>setPage("program")}>
-                <span className="home-modern-action-icon">🏓</span><span className="home-modern-action-copy"><strong>Program Latihan</strong><small>Private / Grup</small></span>
+
+              <button className="home-modern-action payment-card" type="button" onClick={()=>setPage("pembayaran")}>
+                <span className="home-modern-action-icon">💳</span>
+                <span className="home-modern-action-copy">
+                  <strong>Pembayaran</strong>
+                  <small>Info biaya & pembayaran</small>
+                </span>
+                <span className="home-modern-action-arrow">›</span>
               </button>
             </div>
           </section>
