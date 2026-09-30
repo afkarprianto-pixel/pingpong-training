@@ -631,6 +631,7 @@ function App() {
   const [selectedDay, setSelectedDay] = useState("Semua");
   const [registrationProgram, setRegistrationProgram] = useState("Group");
   const [selectedGroupSize, setSelectedGroupSize] = useState(3);
+  const [pricePopup, setPricePopup] = useState(null);
   const [visitorMode, setVisitorMode] = useState(() => localStorage.getItem("pingtrn_visitor_mode") || "visits");
   const [deviceVisitorCount, setDeviceVisitorCount] = useState(0);
   const [privateRequests, setPrivateRequests] = useState([]);
@@ -3113,7 +3114,150 @@ const formattedSchedules = await Promise.all(
           }
         }
 
+        /* ===== POPUP BIAYA GROUP / PRIVATE ===== */
+        .direct-program-head .direct-program-icon{
+          background:rgba(255,255,255,.96)!important;
+          color:#0873a8!important;
+          border:1px solid #d6edf6!important;
+          box-shadow:0 5px 14px rgba(0,50,80,.10)!important;
+        }
+
+        .training-price-overlay{
+          position:fixed;inset:0;z-index:9999;
+          background:rgba(1,18,34,.64);
+          display:flex;align-items:center;justify-content:center;
+          padding:18px;
+          backdrop-filter:blur(4px);
+          -webkit-backdrop-filter:blur(4px);
+        }
+        .training-price-modal{
+          width:min(390px,100%);
+          background:#fff;
+          border-radius:22px;
+          overflow:hidden;
+          box-shadow:0 24px 65px rgba(0,20,40,.32);
+          border:1px solid rgba(255,255,255,.7);
+        }
+        .training-price-head{
+          padding:18px 18px 15px;
+          color:#fff;
+          background:linear-gradient(145deg,#075c87,#087f82);
+          text-align:center;
+        }
+        .training-price-head .price-icon{
+          width:48px;height:48px;margin:0 auto 7px;
+          border-radius:50%;display:grid;place-items:center;
+          background:rgba(255,255,255,.16);
+          border:1px solid rgba(255,255,255,.34);
+          font-size:26px;
+        }
+        .training-price-head small{font-size:9px;letter-spacing:1.4px;opacity:.88}
+        .training-price-head h3{margin:3px 0 0;font-size:21px}
+        .training-price-body{padding:16px}
+        .price-total-card{
+          background:#eef8fc;border:1px solid #c9e3ed;
+          border-radius:15px;padding:12px;text-align:center;
+        }
+        .price-total-card small{display:block;font-size:9px;color:#69818e}
+        .price-total-card strong{display:block;font-size:25px;color:#075d86;margin-top:2px}
+        .price-breakdown{
+          margin-top:10px;border:1px solid #dbe8ed;border-radius:13px;overflow:hidden;
+        }
+        .price-breakdown-row{
+          display:flex;justify-content:space-between;gap:12px;
+          padding:9px 11px;font-size:11px;color:#385565;
+          border-bottom:1px solid #e6eef1;
+        }
+        .price-breakdown-row:last-child{border-bottom:0}
+        .price-breakdown-row b{color:#073e5b;text-align:right}
+        .price-rental-note{
+          margin-top:10px;padding:10px 11px;border-radius:12px;
+          background:#fff7e8;border:1px solid #f3d69b;
+          color:#72551b;font-size:10px;line-height:1.4;
+        }
+        .training-price-actions{display:grid;grid-template-columns:.8fr 1.2fr;gap:8px;margin-top:13px}
+        .training-price-actions button{
+          min-height:42px;border-radius:12px;font-weight:850;cursor:pointer;
+        }
+        .price-back-btn{border:1px solid #cbdde5;background:#f5f9fb;color:#4c6674}
+        .price-continue-btn{border:0;background:linear-gradient(145deg,#138ee4,#087a82);color:#fff}
+
       `}</style>
+
+      {pricePopup && (() => {
+        const isGroup = pricePopup.type === "Group";
+        const size = Number(pricePopup.size || 0);
+        const coachFee = isGroup ? 300000 : 350000;
+        const perPerson = isGroup && size ? Math.ceil(coachFee / size) : coachFee;
+        const rupiah = n => `Rp ${Number(n || 0).toLocaleString("id-ID")}`;
+        return (
+          <div className="training-price-overlay" onClick={()=>setPricePopup(null)}>
+            <div className="training-price-modal" onClick={e=>e.stopPropagation()}>
+              <div className="training-price-head">
+                <div className="price-icon">{isGroup ? "👥" : "🏓"}</div>
+                <small>INFORMASI BIAYA LATIHAN</small>
+                <h3>{isGroup ? (size ? `Group ${size} Orang` : "Latihan Group") : "Latihan Private"}</h3>
+              </div>
+
+              <div className="training-price-body">
+                {isGroup && !size ? (
+                  <>
+                    <div style={{fontSize:12,fontWeight:900,color:"#123e57",marginBottom:9}}>Pilih jumlah peserta:</div>
+                    <div className="group-package-grid">
+                      {[3,4,6].map(n=>(
+                        <button key={n} type="button" onClick={()=>{setSelectedGroupSize(n);setPricePopup({type:"Group",size:n});}}>
+                          <span className="group-people-icon">👥</span>
+                          <strong>{n} Orang</strong>
+                          <small>{n===3?"Lebih intensif":n===4?"Seimbang":"Lebih hemat"}</small>
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="price-total-card">
+                      <small>{isGroup ? "BIAYA PELATIH / SESI" : "BIAYA PRIVATE / SESI"}</small>
+                      <strong>{rupiah(coachFee)}</strong>
+                    </div>
+
+                    <div className="price-breakdown">
+                      {isGroup ? <>
+                        <div className="price-breakdown-row"><span>Jumlah peserta</span><b>{size} orang</b></div>
+                        <div className="price-breakdown-row"><span>Biaya pelatih</span><b>{rupiah(coachFee)}</b></div>
+                        <div className="price-breakdown-row"><span>Biaya per orang</span><b>{rupiah(perPerson)} / orang</b></div>
+                      </> : <>
+                        <div className="price-breakdown-row"><span>Peserta</span><b>1 orang</b></div>
+                        <div className="price-breakdown-row"><span>Biaya pelatih</span><b>{rupiah(coachFee)} / sesi</b></div>
+                      </>}
+                    </div>
+
+                    <div className="price-rental-note">
+                      <strong>🏓 Belum termasuk biaya sewa lapangan/meja.</strong><br/>
+                      {isGroup
+                        ? `Biaya sewa lapangan/meja dibagi rata kepada ${size} peserta.`
+                        : "Biaya sewa lapangan/meja dibayarkan terpisah oleh peserta."}
+                    </div>
+
+                    <div className="training-price-actions">
+                      <button className="price-back-btn" type="button" onClick={()=>{
+                        if(isGroup) setPricePopup({type:"Group",size:null});
+                        else setPricePopup(null);
+                      }}>{isGroup ? "Kembali" : "Tutup"}</button>
+                      <button className="price-continue-btn" type="button" onClick={()=>{
+                        setRegistrationProgram(isGroup ? "Group" : "Private");
+                        if(isGroup) setSelectedGroupSize(size);
+                        setPricePopup(null);
+                        setPage("pendaftaran");
+                        window.scrollTo(0,0);
+                      }}>{isGroup ? "Lanjut Pilih Jadwal" : "Lanjut Pilih Program"}</button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {page === "admin" && (
 
@@ -3593,7 +3737,7 @@ const formattedSchedules = await Promise.all(
 
           <section className="quick-actions home-modern-actions">
             <div className="home-modern-actions-grid">
-              <button className="home-modern-action group-card" type="button" onClick={()=>{setRegistrationProgram("Group");setPage("pendaftaran");window.scrollTo(0,0);}}>
+              <button className="home-modern-action group-card" type="button" onClick={()=>setPricePopup({type:"Group",size:null})}>
                 <span className="home-modern-action-icon">👥</span>
                 <span className="home-modern-action-copy">
                   <strong>Latihan Group</strong>
@@ -3602,7 +3746,7 @@ const formattedSchedules = await Promise.all(
                 <span className="home-modern-action-arrow">›</span>
               </button>
 
-              <button className="home-modern-action private-card" type="button" onClick={()=>{setRegistrationProgram("Private");setPage("pendaftaran");window.scrollTo(0,0);}}>
+              <button className="home-modern-action private-card" type="button" onClick={()=>setPricePopup({type:"Private",size:1})}>
                 <span className="home-modern-action-icon">🏓</span>
                 <span className="home-modern-action-copy">
                   <strong>Latihan Private</strong>
@@ -4310,7 +4454,7 @@ const formattedSchedules = await Promise.all(
                   ].map(([size,label,desc])=>
                     <button key={size} type="button"
                       className={selectedGroupSize===size?"active":""}
-                      onClick={()=>setSelectedGroupSize(size)}>
+                      onClick={()=>{setSelectedGroupSize(size);setPricePopup({type:"Group",size});}}>
                       <span className="group-people-icon">👥</span>
                       <strong>{label}</strong>
                       <small>{desc}</small>
