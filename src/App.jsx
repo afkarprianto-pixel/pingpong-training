@@ -3236,6 +3236,14 @@ const formattedSchedules = await Promise.all(
           box-shadow:0 6px 16px rgba(7,67,99,.08)!important;
         }
 
+        /* PRIVATE dibuat dengan struktur visual yang sama seperti GROUP */
+        .private-same-as-group .group-package-picker{
+          margin-bottom:12px!important;
+        }
+        .private-same-as-group .schedule-grid{
+          margin-top:10px!important;
+        }
+
       `}</style>
 
       {pricePopup && (() => {
@@ -4532,41 +4540,64 @@ const formattedSchedules = await Promise.all(
                   </div>)}
               </div>
             </> : <>
-              <section className="private-request-modern">
-                <div className="private-request-head">
-                  <div><span>PRIVATE TRAINING</span><h3>Pilih Program & Jadwal Private</h3></div>
-                  <div className="private-request-badge">1 Peserta</div>
+              <section className="private-same-as-group">
+                <section className="group-package-picker">
+                  <div className="group-package-title">Pilih Program Private</div>
+                  <select
+                    value={privateProgram}
+                    onChange={e=>setPrivateProgram(e.target.value)}
+                    style={{width:"100%",padding:"11px 12px",borderRadius:12,border:"1px solid #c8dce5",background:"#fff",fontWeight:800,color:"#153f55"}}
+                  >
+                    <option>Teknik Dasar</option>
+                    <option>Spin Bola Kosong</option>
+                    <option>Spin Bola Isi</option>
+                    <option>Teknik Block & Defend</option>
+                    <option>Menghadapi Pemain Bintik</option>
+                    <option>Persiapan Turnamen</option>
+                    <option>Program Khusus</option>
+                  </select>
+                </section>
+
+                <div className="day-filter">
+                  {days.map(day=><button key={day} className={selectedDay===day?"active":""} onClick={()=>setSelectedDay(day)}>{day}</button>)}
                 </div>
-                <p className="private-request-intro">Pilih fokus latihan, lalu pilih slot Private yang sudah dibuat Coach. Untuk negosiasi atau informasi tambahan gunakan WhatsApp Coach.</p>
-                <div className="private-program-block">
-                  <label>Pilih Fokus Latihan</label>
-                  <div className="private-program-list">
-                    {[
-                      ["Teknik Dasar","Servis, receive, stroke dasar & footwork","🏓"],
-                      ["Spin Bola Kosong","Topspin, underspin & sidespin","🔄"],
-                      ["Spin Bola Isi","Kontrol spin dan pola serangan","⚡"],
-                      ["Teknik Block & Defend","Block, chop dan pertahanan","🛡️"],
-                      ["Menghadapi Pemain Bintik","Strategi dan pola menghadapi bintik","🎯"],
-                      ["Persiapan Turnamen","Game plan & simulasi pertandingan","🏆"],
-                      ["Program Khusus","Materi sesuai kebutuhan Anda","⚙️"]
-                    ].map(([title,desc,icon])=><button key={title} type="button" className={`private-program-option ${privateProgram===title?"active":""}`} onClick={()=>setPrivateProgram(title)}>
-                      <span className="private-program-radio">{privateProgram===title?"●":"○"}</span><span className="private-program-icon">{icon}</span><span><strong>{title}</strong><small>{desc}</small></span>
-                    </button>)}
-                  </div>
-                </div>
-                <div className="day-filter">{days.map(day=><button key={day} className={selectedDay===day?"active":""} onClick={()=>setSelectedDay(day)}>{day}</button>)}</div>
+
                 <div className="schedule-grid">
-                  {filteredSchedules.filter(item=>item.type==="Private").length===0 ? <div style={{textAlign:"center",gridColumn:"1/-1",background:"#fff",padding:20,borderRadius:14}}>Belum ada jadwal Private tersedia.</div> :
-                    filteredSchedules.filter(item=>item.type==="Private").map(item=><div className="schedule-card" key={item.id}>
-                      <div className="schedule-top"><span className="day">{item.day}</span><span className="time">{item.time}</span></div>
+                  {filteredSchedules.filter(item=>item.type==="Private").length===0 ? (
+                    <div style={{textAlign:"center",gridColumn:"1/-1",background:"#fff",padding:20,borderRadius:14}}>
+                      Belum ada jadwal Private tersedia.
+                    </div>
+                  ) : filteredSchedules.filter(item=>item.type==="Private").map(item=>(
+                    <div className="schedule-card" key={item.id}>
+                      <div className="schedule-top">
+                        <span className="day">{item.day}</span>
+                        <span className="time">{item.time}</span>
+                      </div>
                       <div className="coach">PRIVATE • {item.registered}/1 peserta</div>
-                      <div style={{fontSize:11,color:"#64748b",margin:"7px 0"}}>Fokus: <strong>{privateProgram}</strong></div>
-                      <button className="choose-btn" disabled={!item.available} onClick={()=>chooseSchedule(item)}>{item.available?"Pilih Jadwal & Daftar":"Penuh / Ditutup"}</button>
-                    </div>)}
+                      <button
+                        className="choose-btn"
+                        disabled={!item.available}
+                        onClick={()=>{
+                          setRegistrationProgram("Private");
+                          chooseSchedule(item);
+                        }}
+                      >
+                        {item.available?"Pilih Private & Daftar":"Penuh / Ditutup"}
+                      </button>
+                    </div>
+                  ))}
                 </div>
-                <button type="button" className="back-button" style={{width:"100%",marginTop:10}} onClick={()=>window.open("https://wa.me/6285814466929","_blank","noopener,noreferrer")}>💬 Hubungi Coach via WhatsApp</button>
+
+                <button
+                  type="button"
+                  className="back-button"
+                  style={{width:"100%",marginTop:10}}
+                  onClick={()=>window.open("https://wa.me/6285814466929","_blank","noopener,noreferrer")}
+                >
+                  💬 Hubungi Coach via WhatsApp
+                </button>
               </section>
-            </>            </section>}
+            </>            </>            </section>}
           </div>
         </main>
       )}
