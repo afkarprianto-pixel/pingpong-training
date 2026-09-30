@@ -630,6 +630,9 @@ function App() {
 
   const [selectedDay, setSelectedDay] = useState("Semua");
   const [registrationProgram, setRegistrationProgram] = useState("Group");
+  const [selectedGroupSize, setSelectedGroupSize] = useState(3);
+  const [visitorMode, setVisitorMode] = useState(() => localStorage.getItem("pingtrn_visitor_mode") || "visits");
+  const [deviceVisitorCount, setDeviceVisitorCount] = useState(0);
   const [privateRequests, setPrivateRequests] = useState([]);
   const [loadingPrivateRequests, setLoadingPrivateRequests] = useState(false);
   const [privateName, setPrivateName] = useState("");
@@ -658,15 +661,37 @@ function App() {
     let cancelled = false;
     async function catatDanHitungKunjungan() {
       try {
-        // Setiap kali situs dibuka/reload, catat sebagai 1 kunjungan baru.
-        // Tidak lagi memakai visitor_id tetap dari localStorage/perangkat.
-        const visitId = window.crypto?.randomUUID?.() || `visit-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        // ID perangkat tetap untuk statistik "Per Perangkat".
+        let deviceId = localStorage.getItem("pingtrn_device_id");
+        if (!deviceId) {
+          deviceId = window.crypto?.randomUUID?.() || `device-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+          localStorage.setItem("pingtrn_device_id", deviceId);
+        }
+
+        // Simpan 1 baris perangkat unik hanya sekali.
+        const deviceVisitorId = `device:${deviceId}`;
+        const deviceRecordedKey = `pingtrn_device_recorded_${deviceId}`;
+        if (!localStorage.getItem(deviceRecordedKey)) {
+          const { error: deviceInsertError } = await supabase.from("site_visits").insert({ visitor_id: deviceVisitorId });
+          if (!deviceInsertError) localStorage.setItem(deviceRecordedKey, "1");
+        }
+
+        // Setiap buka/reload tetap dicatat sebagai 1 kunjungan.
+        const visitId = `visit:${window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`}`;
         const { error: insertError } = await supabase.from("site_visits").insert({ visitor_id: visitId });
         if (insertError) console.error("Gagal mencatat kunjungan:", insertError);
 
-        const { count, error } = await supabase.from("site_visits").select("id", { count:"exact", head:true });
-        if (error) console.error("Gagal menghitung kunjungan:", error);
-        else if (!cancelled) setVisitorCount(count || 0);
+        // Total kunjungan: histori lama + baris visit baru, tetapi baris device tidak ikut.
+        const { data: allRows, error } = await supabase.from("site_visits").select("visitor_id");
+        if (error) {
+          console.error("Gagal menghitung statistik:", error);
+        } else if (!cancelled) {
+          const ids = (allRows || []).map(r => String(r.visitor_id || ""));
+          const deviceRows = ids.filter(id => id.startsWith("device:"));
+          const visitRows = ids.filter(id => !id.startsWith("device:"));
+          setVisitorCount(visitRows.length);
+          setDeviceVisitorCount(new Set(deviceRows).size);
+        }
       } catch (error) {
         console.error("Visit counter error:", error);
       }
@@ -2508,6 +2533,55 @@ const formattedSchedules = await Promise.all(
           .modern-bottom-item{height:50px!important;min-height:50px!important}
         }
 
+        /* ===== UPDATE 3 POIN: HOME / GROUP / VISITOR ===== */
+        .visitor-settings-panel{margin:14px 0;padding:14px;background:rgba(255,255,255,.9);border:1px solid #b9d0da;border-radius:16px}
+        .visitor-settings-panel h3{margin:0;color:#083c58}.visitor-settings-lead{font-size:11px;color:#657f8d;margin:4px 0 12px}
+        .visitor-mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+        .visitor-mode-grid button{position:relative;border:1px solid #c7dce5;background:#f7fbfd;border-radius:14px;padding:13px 9px;text-align:center;cursor:pointer;color:#123e57}
+        .visitor-mode-grid button.active{border:2px solid #1684f5;background:linear-gradient(180deg,#eaf6ff,#f7fcff);box-shadow:0 5px 16px rgba(22,132,245,.13)}
+        .visitor-mode-grid span,.visitor-mode-grid strong,.visitor-mode-grid small,.visitor-mode-grid b{display:block}
+        .visitor-mode-grid span{font-size:25px}.visitor-mode-grid strong{font-size:12px;margin-top:5px}.visitor-mode-grid small{font-size:9px;line-height:1.3;color:#718996;margin:3px 0 8px}.visitor-mode-grid b{font-size:23px;color:#0874d1}
+        .visitor-mode-note{margin-top:10px;padding:9px 10px;background:#eaf4f8;border-radius:10px;font-size:10px;color:#526f7e}
+
+        .group-package-picker{max-width:680px;margin:0 auto 13px;background:#fff;border:1px solid #cbdde5;border-radius:17px;padding:13px;box-shadow:0 8px 22px rgba(20,55,75,.08)}
+        .group-package-title{font-size:14px;font-weight:950;color:#0b3550;margin-bottom:9px}
+        .group-package-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+        .group-package-grid button{position:relative;border:1px solid #c6dce8;background:linear-gradient(180deg,#f8fcff,#edf7ff);border-radius:14px;padding:11px 4px 10px;cursor:pointer;color:#164f76;min-height:94px}
+        .group-package-grid button.active{border:2px solid #1684f5;background:linear-gradient(145deg,#e9f5ff,#dff1ff);box-shadow:0 5px 15px rgba(22,132,245,.14);transform:translateY(-1px)}
+        .group-people-icon{display:block;font-size:25px}.group-package-grid strong,.group-package-grid small{display:block}.group-package-grid strong{font-size:12px;margin-top:4px}.group-package-grid small{font-size:8.5px;color:#6b8593;margin-top:3px}.group-check{position:absolute;right:6px;top:5px;width:17px;height:17px;border-radius:50%;background:#1684f5;color:#fff;font-size:11px;line-height:17px}
+
+        /* Home benar-benar mengikuti komposisi mockup: teks kiri, feature row, kartu dan nav satu bahasa visual */
+        .app.home-app .hero{position:relative!important;background-position:62% center!important}
+        .app.home-app .hero:after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,rgba(1,24,48,.72) 0%,rgba(1,31,57,.35) 48%,rgba(0,35,60,.05) 75%)}
+        .app.home-app .hero-content{position:relative!important;z-index:2!important;display:flex!important;flex-direction:column!important;align-items:flex-start!important;justify-content:flex-start!important;text-align:left!important;padding:8px 0 0!important}
+        .app.home-app .modern-hero-label{align-self:flex-start!important;margin:0!important;padding:5px 10px!important;font-size:9px!important}
+        .hero-copy-card{margin-top:13px;text-align:left}
+        .app.home-app .modern-hero-title{font-size:clamp(27px,7vw,39px)!important;line-height:1.01!important;margin:0 0 8px!important;text-align:left!important;font-weight:950!important}
+        .app.home-app .modern-hero-sub{font-size:11px!important;line-height:1.4!important;text-align:left!important;margin:0!important}
+        .hero-feature-row{margin-top:auto;margin-bottom:8px;width:min(360px,100%);display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+        .hero-feature-row>div{display:flex;flex-direction:column;align-items:center;text-align:center;color:#fff;font-size:9px;text-shadow:0 2px 5px rgba(0,0,0,.6)}
+        .hero-feature-row span{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;border:1px solid #22baff;background:rgba(0,55,96,.58);font-size:19px;box-shadow:0 5px 14px rgba(0,0,0,.2)}
+        .hero-feature-row b{font-size:9px;margin-top:3px}.hero-feature-row small{font-size:8px;opacity:.9}
+        .app.home-app .home-modern-actions{background:#f4f8fa!important;padding:10px 9px!important}
+        .app.home-app .home-modern-action{min-height:78px!important;border-radius:17px!important;border:0!important;box-shadow:0 7px 17px rgba(10,54,82,.15)!important}
+        .app.home-app .home-modern-action.group-card{background:linear-gradient(145deg,#268eff,#0870df)!important}
+        .app.home-app .home-modern-action.private-card{background:linear-gradient(145deg,#20d8b1,#06957e)!important}
+        .app.home-app .home-modern-action.schedule-card-home{background:linear-gradient(145deg,#ff9448,#ff6436)!important}
+        .app.home-app .home-modern-action.payment-card{background:linear-gradient(145deg,#9565f6,#6939dc)!important}
+        .app.home-app .modern-bottom-nav{background:linear-gradient(180deg,#052e4d,#031e36)!important;border-radius:0!important;padding:5px!important}
+        .app.home-app .modern-bottom-item{background:transparent!important;border:1px solid transparent!important;border-radius:10px!important}
+        .app.home-app .modern-bottom-item.active{background:rgba(25,137,213,.34)!important;border-color:rgba(69,191,255,.36)!important}
+
+        @media(max-width:600px){
+          .app.home-app .hero{height:440px!important;min-height:440px!important;padding:10px 18px 8px!important;background-position:62% center!important}
+          .app.home-app .modern-hero-title{font-size:31px!important;max-width:290px!important}
+          .hero-feature-row{width:260px!important}
+          .app.home-app .home-modern-actions-grid{gap:9px!important}
+          .app.home-app .home-modern-action{min-height:76px!important;padding:9px 28px 9px 10px!important}
+          .app.home-app .home-modern-action-copy strong{font-size:12px!important}
+          .app.home-app .home-modern-action-copy small{font-size:8.5px!important}
+        }
+
       `}</style>
 
       {page === "admin" && (
@@ -2551,15 +2625,25 @@ const formattedSchedules = await Promise.all(
             )}
 
             {coachMenu==="visitors" && (
-              <section style={{margin:"14px 0",padding:14,background:"rgba(255,255,255,.84)",border:"1px solid #b9d0da",borderRadius:12}}>
-                <h3 style={{marginTop:0}}>👁 Statistik Kunjungan</h3>
-                <div style={{padding:"18px 14px",borderRadius:14,background:"linear-gradient(145deg,#063d56,#087b72)",color:"#fff",textAlign:"center",boxShadow:"0 6px 18px rgba(0,43,64,.14)"}}>
-                  <div style={{fontSize:12,opacity:.9}}>TOTAL KUNJUNGAN SITUS</div>
-                  <div style={{fontSize:34,fontWeight:950,lineHeight:1.15,marginTop:5}}>{visitorCount.toLocaleString("id-ID")}</div>
-                  <div style={{fontSize:11,opacity:.88,marginTop:5}}>Setiap situs dibuka / reload dihitung sebagai 1 kunjungan.</div>
+              <section className="visitor-settings-panel">
+                <h3>👁 Statistik & Mode Pengunjung</h3>
+                <p className="visitor-settings-lead">Pilih angka yang ingin ditampilkan di halaman depan.</p>
+                <div className="visitor-mode-grid">
+                  <button type="button" className={visitorMode==="visits"?"active":""}
+                    onClick={()=>{setVisitorMode("visits");localStorage.setItem("pingtrn_visitor_mode","visits");}}>
+                    <span>🔄</span><strong>Per Kunjungan</strong>
+                    <small>Setiap situs dibuka / reload dihitung.</small>
+                    <b>{visitorCount.toLocaleString("id-ID")}</b>
+                  </button>
+                  <button type="button" className={visitorMode==="devices"?"active":""}
+                    onClick={()=>{setVisitorMode("devices");localStorage.setItem("pingtrn_visitor_mode","devices");}}>
+                    <span>📱</span><strong>Per Perangkat</strong>
+                    <small>Satu browser/perangkat dihitung satu kali.</small>
+                    <b>{deviceVisitorCount.toLocaleString("id-ID")}</b>
+                  </button>
                 </div>
-                <div style={{fontSize:12,color:"#526b78",background:"#edf5f7",padding:10,borderRadius:9,marginTop:10,lineHeight:1.45}}>
-                  Statistik ini menggunakan data kunjungan nyata dari tabel <strong>site_visits</strong>. Perangkat yang sama dapat menambah hitungan lagi ketika situs dibuka kembali.
+                <div className="visitor-mode-note">
+                  Mode aktif: <strong>{visitorMode==="visits"?"Per Kunjungan":"Per Perangkat"}</strong>. Angka di halaman depan otomatis mengikuti pilihan ini.
                 </div>
               </section>
             )}
@@ -2963,8 +3047,15 @@ const formattedSchedules = await Promise.all(
           >
             <div className="hero-content" style={{maxWidth:610,padding:0,width:"100%",margin:"0 auto",textAlign:"center"}}>
               <div className="hero-label modern-hero-label">PROGRAM LATIHAN TENIS MEJA</div>
-              <h2 className="modern-hero-title">Latihan<br/>Lebih Teratur,<br/><span>Progress<br/>Lebih Terukur</span></h2>
-              <div className="modern-hero-sub">Bersama Coach Profesional, untuk Semua Level Pemain</div>
+              <div className="hero-copy-card">
+                <h2 className="modern-hero-title">Latihan<br/>Lebih Teratur,<br/><span>Progress<br/>Lebih Terukur</span></h2>
+                <div className="modern-hero-sub">Bersama Coach Profesional<br/>untuk Semua Level Pemain</div>
+              </div>
+              <div className="hero-feature-row">
+                <div><span>📅</span><b>Jadwal</b><small>Terstruktur</small></div>
+                <div><span>📈</span><b>Progress</b><small>Terpantau</small></div>
+                <div><span>🏓</span><b>Coach</b><small>Profesional</small></div>
+              </div>
 
             </div>
           </section>
@@ -2989,7 +3080,7 @@ const formattedSchedules = await Promise.all(
                 <span className="home-modern-action-arrow">›</span>
               </button>
 
-              <button className="home-modern-action schedule-card" type="button" onClick={()=>setPage("jadwal")}>
+              <button className="home-modern-action schedule-card-home" type="button" onClick={()=>setPage("jadwal")}>
                 <span className="home-modern-action-icon">📅</span>
                 <span className="home-modern-action-copy">
                   <strong>Daftar Jadwal</strong>
@@ -3678,10 +3769,29 @@ const formattedSchedules = await Promise.all(
             )}
 
             {registrationProgram==="Group" ? <>
+              <section className="group-package-picker">
+                <div className="group-package-title">Pilih Jumlah Peserta</div>
+                <div className="group-package-grid">
+                  {[
+                    [3,"3 Orang","Lebih intensif"],
+                    [4,"4 Orang","Seimbang"],
+                    [6,"6 Orang","Lebih hemat"]
+                  ].map(([size,label,desc])=>
+                    <button key={size} type="button"
+                      className={selectedGroupSize===size?"active":""}
+                      onClick={()=>setSelectedGroupSize(size)}>
+                      <span className="group-people-icon">👥</span>
+                      <strong>{label}</strong>
+                      <small>{desc}</small>
+                      <span className="group-check">{selectedGroupSize===size?"✓":""}</span>
+                    </button>
+                  )}
+                </div>
+              </section>
               <div className="day-filter">{days.map(day=><button key={day} className={selectedDay===day?"active":""} onClick={()=>setSelectedDay(day)}>{day}</button>)}</div>
               <div className="schedule-grid">
-                {filteredSchedules.filter(item=>item.type==="Group").length===0 ? <div style={{textAlign:"center",gridColumn:"1/-1",background:"#fff",padding:20,borderRadius:14}}>Belum ada jadwal Group tersedia.</div> :
-                  filteredSchedules.filter(item=>item.type==="Group").map(item=><div className="schedule-card" key={item.id}>
+                {filteredSchedules.filter(item=>item.type==="Group" && Number(item.quota)===Number(selectedGroupSize)).length===0 ? <div style={{textAlign:"center",gridColumn:"1/-1",background:"#fff",padding:20,borderRadius:14}}>Belum ada jadwal Group {selectedGroupSize} orang tersedia.</div> :
+                  filteredSchedules.filter(item=>item.type==="Group" && Number(item.quota)===Number(selectedGroupSize)).map(item=><div className="schedule-card" key={item.id}>
                     <div className="schedule-top"><span className="day">{item.day}</span><span className="time">{item.time}</span></div>
                     <div className="coach">GRUP • {item.registered}/{item.quota} peserta</div>
                     <button className="choose-btn" disabled={!item.available} onClick={()=>chooseSchedule(item)}>{item.available?"Pilih Group & Daftar":"Penuh / Ditutup"}</button>
@@ -4219,7 +4329,7 @@ const formattedSchedules = await Promise.all(
             textShadow:"0 1px 3px rgba(0,0,0,.65)"
           }}
         >
-          👁 Kunjungan: {visitorCount.toLocaleString("id-ID")}
+          👁 {visitorMode==="visits"?"Kunjungan":"Pengunjung"}: {(visitorMode==="visits"?visitorCount:deviceVisitorCount).toLocaleString("id-ID")}
         </div>
       )}
 
