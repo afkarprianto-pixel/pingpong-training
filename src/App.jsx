@@ -4597,7 +4597,7 @@ const formattedSchedules = await Promise.all(
                   💬 Hubungi Coach via WhatsApp
                 </button>
               </section>
-            </>            </>            </section>}
+            </>}
           </div>
         </main>
       )}
