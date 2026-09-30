@@ -2421,6 +2421,93 @@ const formattedSchedules = await Promise.all(
           .program-picker,.private-request-modern{border-radius:16px}
         }
 
+        /* ===== FINAL MOBILE FRONT ALIGNMENT ===== */
+        .modern-brand{
+          display:flex!important;align-items:center!important;gap:9px!important;
+          min-width:0!important;height:100%!important;
+        }
+        .modern-brand-logo-wrap{
+          flex:0 0 42px!important;width:42px!important;height:42px!important;
+          border-radius:50%!important;background:#fff!important;
+          display:grid!important;place-items:center!important;overflow:hidden!important;
+        }
+        .modern-brand-logo-wrap img{
+          width:42px!important;height:42px!important;max-height:none!important;
+          object-fit:contain!important;
+        }
+        .modern-brand-copy{display:flex!important;flex-direction:column!important;justify-content:center!important;line-height:1!important}
+        .modern-brand-ping{font-size:18px!important;font-weight:900!important;letter-spacing:.4px!important;color:#fff!important}
+        .modern-brand-training{font-size:16px!important;font-weight:900!important;letter-spacing:1px!important;color:#26d9a4!important;margin-top:4px!important}
+
+        .hero-content{max-width:610px!important;margin:0 auto!important;text-align:left!important}
+        .modern-hero-label{
+          margin:4px 0 0!important;
+          font-size:10px!important;
+          padding:6px 12px!important;
+          white-space:nowrap!important;
+        }
+        .modern-hero-title{
+          max-width:330px!important;
+          font-size:clamp(28px,7.1vw,39px)!important;
+          line-height:1.02!important;
+          margin:18px 0 10px!important;
+          letter-spacing:-.7px!important;
+        }
+        .modern-hero-sub{
+          max-width:330px!important;font-size:12px!important;line-height:1.42!important;
+          margin:0!important;
+        }
+
+        .modern-bottom-nav{
+          display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;
+          gap:3px!important;padding:5px 5px 6px!important;
+          background:linear-gradient(180deg,#073555,#04243e)!important;
+        }
+        .modern-bottom-item{
+          width:100%!important;min-width:0!important;height:52px!important;min-height:52px!important;
+          margin:0!important;padding:4px 1px!important;border-radius:11px!important;
+          background:rgba(255,255,255,.025)!important;
+          border:1px solid transparent!important;
+          display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;
+          color:#fff!important;box-shadow:none!important;
+        }
+        .modern-bottom-item.active{
+          background:rgba(19,126,202,.28)!important;
+          border-color:rgba(72,191,255,.42)!important;
+          color:#8fe8ff!important;
+          box-shadow:inset 0 0 12px rgba(30,155,225,.12)!important;
+        }
+        .modern-bottom-item img{margin:0 auto!important}
+        .modern-bottom-item>div{margin-left:auto!important;margin-right:auto!important}
+
+        .direct-program-head{
+          max-width:680px;margin:0 auto 12px;padding:13px 14px;border-radius:16px;
+          display:flex;align-items:center;gap:12px;color:#fff;
+          box-shadow:0 8px 22px rgba(12,54,76,.12);
+        }
+        .group-direct-head{background:linear-gradient(135deg,#1687ed,#0871d7)}
+        .private-direct-head{background:linear-gradient(135deg,#16bda0,#087e73)}
+        .direct-program-icon{
+          width:46px;height:46px;min-width:46px;border-radius:13px;
+          display:grid;place-items:center;font-size:26px;background:rgba(255,255,255,.18)
+        }
+        .direct-program-head small{font-size:9px;font-weight:900;letter-spacing:1px;opacity:.9}
+        .direct-program-head h3{font-size:18px;margin:2px 0 1px}
+        .direct-program-head p{font-size:10px;margin:0;opacity:.92;line-height:1.3}
+
+        @media(max-width:600px){
+          .header{height:58px!important;min-height:58px!important;padding:5px 10px!important}
+          .header .brand img{max-height:none!important}
+          .modern-brand-logo-wrap,.modern-brand-logo-wrap img{width:42px!important;height:42px!important}
+          .modern-brand-ping{font-size:17px!important}
+          .modern-brand-training{font-size:15px!important}
+          .modern-hero-label{margin-left:0!important}
+          .modern-hero-title{font-size:34px!important;margin-top:16px!important}
+          .modern-hero-sub{font-size:12px!important}
+          .modern-bottom-nav{min-height:62px!important;height:auto!important}
+          .modern-bottom-item{height:50px!important;min-height:50px!important}
+        }
+
       `}</style>
 
       {page === "admin" && (
@@ -3569,25 +3656,26 @@ const formattedSchedules = await Promise.all(
               <div style={{letterSpacing:3,color:"#079f79",fontWeight:700,fontSize:13}}>PENDAFTARAN LATIHAN</div>
               <h2 style={{fontSize:30,margin:"8px 0"}}>Pilih Program Latihan</h2>
             </div>
-            <section className="program-picker">
-              <div className="program-picker-title">Pilih Jenis Latihan</div>
-              <div className="program-picker-grid">
-                {["Group","Private"].map(type=><button key={type} type="button" onClick={()=>setRegistrationProgram(type)}
-                  className={`program-picker-card ${type.toLowerCase()} ${registrationProgram===type?"active":""}`}>
-                  <div className="program-picker-icon">{type==="Group"?"👥":"●"}</div>
-                  <strong>{type==="Group"?"Group":"Private"}</strong>
-                  <small>{type==="Group"?"Latihan bersama lebih seru & hemat":"Latihan fokus sesuai kebutuhan"}</small>
-                </button>)}
-              </div>
-              {registrationProgram==="Group" && <div className="group-size-preview">
-                <div className="program-picker-title" style={{marginTop:12}}>Pilihan Group</div>
-                <div className="group-size-grid">
-                  {[["3 Orang","Intensif"],["4 Orang","Seimbang"],["6 Orang","Lebih Hemat"]].map(([n,d])=>
-                    <div key={n} className="group-size-card"><b>👥 {n}</b><small>{d}</small></div>
-                  )}
+            {registrationProgram==="Group" && (
+              <section className="direct-program-head group-direct-head">
+                <div className="direct-program-icon">👥</div>
+                <div>
+                  <small>PROGRAM LATIHAN</small>
+                  <h3>Latihan Group</h3>
+                  <p>Pilih jadwal dan paket Group yang tersedia.</p>
                 </div>
-              </div>}
-            </section>
+              </section>
+            )}
+            {registrationProgram==="Private" && (
+              <section className="direct-program-head private-direct-head">
+                <div className="direct-program-icon">🏓</div>
+                <div>
+                  <small>PRIVATE TRAINING</small>
+                  <h3>Latihan Private</h3>
+                  <p>Pilih fokus latihan dan kirim pengajuan langsung ke Coach.</p>
+                </div>
+              </section>
+            )}
 
             {registrationProgram==="Group" ? <>
               <div className="day-filter">{days.map(day=><button key={day} className={selectedDay===day?"active":""} onClick={()=>setSelectedDay(day)}>{day}</button>)}</div>
