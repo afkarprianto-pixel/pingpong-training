@@ -2969,6 +2969,150 @@ const formattedSchedules = await Promise.all(
           }
         }
 
+        /* =========================================================
+           HOME FIT FIX
+           - Hero dipendekkan agar seluruh muka Home terlihat
+           - 4 kartu dibuat sedikit lebih compact
+           - Home s/d Chat: semua ikon dibesarkan dan diseragamkan
+        ========================================================= */
+
+        /* Foto/hero sebelumnya terlalu tinggi (440px). */
+        @media(max-width:600px){
+          .app.home-app .hero{
+            height:360px!important;
+            min-height:360px!important;
+            padding:8px 16px 6px!important;
+            background-position:62% center!important;
+          }
+          .app.home-app .modern-hero-label{
+            margin-top:0!important;
+            padding:4px 9px!important;
+            font-size:8px!important;
+          }
+          .app.home-app .hero-copy-card{
+            margin-top:8px!important;
+          }
+          .app.home-app .modern-hero-title{
+            font-size:27px!important;
+            line-height:1!important;
+            margin:0 0 6px!important;
+          }
+          .app.home-app .modern-hero-sub{
+            font-size:9.5px!important;
+            line-height:1.25!important;
+          }
+          .app.home-app .hero-feature-row-bottom{
+            bottom:7px!important;
+            width:80%!important;
+          }
+
+          /* 4 menu utama tetap glass tetapi lebih pendek */
+          .app.home-app .home-modern-actions{
+            padding:7px 8px!important;
+          }
+          .app.home-app .home-modern-actions-grid{
+            gap:7px!important;
+          }
+          .app.home-app .home-modern-action,
+          .app.home-app .home-modern-action.group-card,
+          .app.home-app .home-modern-action.private-card,
+          .app.home-app .home-modern-action.schedule-card-home,
+          .app.home-app .home-modern-action.payment-card{
+            min-height:61px!important;
+            height:61px!important;
+            padding:5px 24px 5px 7px!important;
+            border-radius:15px!important;
+          }
+          .app.home-app .home-modern-action-icon{
+            width:35px!important;
+            min-width:35px!important;
+            height:35px!important;
+            font-size:21px!important;
+            border-radius:11px!important;
+          }
+          .app.home-app .home-modern-action-copy strong{
+            font-size:10.5px!important;
+          }
+          .app.home-app .home-modern-action-copy small{
+            font-size:7.5px!important;
+            line-height:1.1!important;
+          }
+
+          /* Bottom nav dibuat compact tetapi ikon justru besar dan seragam */
+          .app.home-app .modern-bottom-nav{
+            min-height:66px!important;
+            height:66px!important;
+            padding:4px 3px 3px!important;
+            grid-template-columns:repeat(6,minmax(0,1fr))!important;
+            gap:1px!important;
+          }
+          .app.home-app .modern-bottom-item,
+          .app.home-app .modern-bottom-item.active{
+            height:58px!important;
+            min-height:58px!important;
+            padding:0!important;
+            display:flex!important;
+            flex-direction:column!important;
+            justify-content:center!important;
+            align-items:center!important;
+            gap:2px!important;
+          }
+
+          /* Ada ikon yang berupa img dan ada yang berupa div/emoji.
+             Samakan container ikon pertama semuanya. */
+          .app.home-app .modern-bottom-item > *:first-child{
+            width:38px!important;
+            min-width:38px!important;
+            max-width:38px!important;
+            height:38px!important;
+            min-height:38px!important;
+            max-height:38px!important;
+            box-sizing:border-box!important;
+            margin:0 auto!important;
+            padding:6px!important;
+            border-radius:50%!important;
+            background:rgba(4,80,133,.78)!important;
+            border:1px solid rgba(76,199,255,.70)!important;
+            box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 4px 10px rgba(0,0,0,.18)!important;
+            display:flex!important;
+            align-items:center!important;
+            justify-content:center!important;
+            line-height:1!important;
+            font-size:22px!important;
+            object-fit:contain!important;
+          }
+          .app.home-app .modern-bottom-item.active > *:first-child{
+            background:rgba(6,107,174,.88)!important;
+            border-color:rgba(111,222,255,.9)!important;
+          }
+          .app.home-app .modern-bottom-item > img:first-child{
+            object-fit:contain!important;
+          }
+          .app.home-app .modern-bottom-item > div:last-child{
+            width:auto!important;
+            height:auto!important;
+            min-height:0!important;
+            max-height:none!important;
+            padding:0!important;
+            margin:0!important;
+            border:0!important;
+            border-radius:0!important;
+            background:transparent!important;
+            box-shadow:none!important;
+            font-size:7.8px!important;
+            line-height:1!important;
+            color:#f5fbff!important;
+          }
+
+          /* Footer/visitor jangan menambah ruang besar */
+          .app.home-app .home-visitor-compact{
+            margin:0!important;
+            padding:2px 8px 3px!important;
+            min-height:20px!important;
+            font-size:9px!important;
+          }
+        }
+
       `}</style>
 
       {page === "admin" && (
