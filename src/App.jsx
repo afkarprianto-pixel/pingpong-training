@@ -3274,6 +3274,62 @@ const formattedSchedules = await Promise.all(
           font-size:12px!important;
         }
 
+        /* Migrasi super compact: tidak memakai dropdown native yang tulisannya besar */
+        .migration-compact-fix{
+          width:min(88vw,340px)!important;
+          padding:9px!important;
+          border-radius:13px!important;
+        }
+        .migration-target-list{
+          display:grid;
+          gap:4px;
+          max-height:180px;
+          overflow-y:auto;
+        }
+        .migration-target-list button{
+          width:100%;
+          min-height:34px;
+          padding:5px 7px;
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          gap:8px;
+          text-align:left;
+          border:1px solid #c9dce5;
+          border-radius:8px;
+          background:#fff;
+          color:#173f54;
+          cursor:pointer;
+          box-shadow:none;
+        }
+        .migration-target-list button span{
+          min-width:0;
+          display:flex;
+          flex-direction:column;
+          gap:1px;
+        }
+        .migration-target-list button b{
+          font-size:9px!important;
+          line-height:1.05!important;
+        }
+        .migration-target-list button small{
+          font-size:8px!important;
+          line-height:1.05!important;
+          color:#6a7f8a!important;
+        }
+        .migration-target-list button em{
+          flex:0 0 auto;
+          font-style:normal;
+          font-size:8px!important;
+          font-weight:900;
+          color:#08799a;
+        }
+        .migration-target-list button.active{
+          border-color:#08799a;
+          background:#e7f6fb;
+          box-shadow:inset 0 0 0 1px #08799a;
+        }
+
       `}</style>
 
       {pricePopup && (() => {
@@ -5211,19 +5267,25 @@ const formattedSchedules = await Promise.all(
         const kandidat=schedules.filter(s=>String(s.id)!==String(migrationMember.schedule_id) && (!asal||s.type===asal.type) && s.activeRaw && !s.registrationClosed && jumlahPesertaJadwal(s.id)<Number(s.quota||1));
         return <div onClick={()=>setMigrationMember(null)} style={{position:"fixed",inset:0,zIndex:10002,background:"rgba(0,0,0,.58)",display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
           <section onClick={e=>e.stopPropagation()} className="migration-compact-fix" style={{width:"min(92vw,390px)",maxHeight:"82vh",overflowY:"auto",background:"#f5f8fa",color:"#102a3a",borderRadius:15,padding:12,boxShadow:"0 18px 50px rgba(0,0,0,.32)"}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><h3 style={{margin:0,fontSize:16,lineHeight:1.1}}>⇄ Migrasi Member</h3><button type="button" onClick={()=>setMigrationMember(null)} style={{width:31,height:31,borderRadius:8,border:"1px solid #abc",background:"#fff"}}>×</button></div>
-            <p style={{fontSize:10.5,color:"#607583",margin:"6px 0 8px"}}>Pindahkan <strong>{migrationMember.name}</strong> tanpa daftar ulang.</p>
-            <div style={{background:"#e9f4f8",borderRadius:9,padding:8,fontSize:10.5,marginBottom:8}}><small>JADWAL SEKARANG</small><br/><strong>{asal?`${asal.type}${asal.type==="Group"?` ${asal.quota} orang`:""} • ${asal.day}, ${asal.time}`:"Tidak ditemukan"}</strong></div>
-            <label style={{display:"block",fontWeight:850,fontSize:10.5,marginBottom:4}}>Jadwal Tujuan</label>
-            <select value={migrationTargetId} onChange={e=>setMigrationTargetId(e.target.value)} style={{width:"100%",padding:"8px 9px",border:"1px solid #a9c3cf",borderRadius:9,fontSize:10.5}}>
-              <option value="">-- Pilih jadwal yang tersedia --</option>
-              {kandidat.map(s=><option key={s.id} value={s.id}>{s.type}{s.type==="Group"?` ${s.quota} orang`:""} — {s.day}, {s.time} — {jumlahPesertaJadwal(s.id)}/{s.quota}</option>)}
-            </select>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><h3 style={{margin:0,fontSize:13,lineHeight:1}}>⇄ Migrasi Member</h3><button type="button" onClick={()=>setMigrationMember(null)} style={{width:25,height:25,borderRadius:7,border:"1px solid #abc",background:"#fff",fontSize:13,padding:0}}>×</button></div>
+            <p style={{fontSize:9,color:"#607583",margin:"4px 0 6px"}}>Pindahkan <strong>{migrationMember.name}</strong> tanpa daftar ulang.</p>
+            <div style={{background:"#e9f4f8",borderRadius:8,padding:6,fontSize:9,marginBottom:6}}><small>JADWAL SEKARANG</small><br/><strong>{asal?`${asal.type}${asal.type==="Group"?` ${asal.quota} orang`:""} • ${asal.day}, ${asal.time}`:"Tidak ditemukan"}</strong></div>
+            <label style={{display:"block",fontWeight:850,fontSize:9.5,marginBottom:4}}>Pilih Jadwal Tujuan</label>
+            <div className="migration-target-list">
+              {kandidat.map(s=>(
+                <button key={s.id} type="button"
+                  className={String(migrationTargetId)===String(s.id)?"active":""}
+                  onClick={()=>setMigrationTargetId(String(s.id))}>
+                  <span><b>{s.type}{s.type==="Group"?` ${s.quota} Orang`:""}</b><small>{s.day} • {s.time}</small></span>
+                  <em>{jumlahPesertaJadwal(s.id)}/{s.quota}</em>
+                </button>
+              ))}
+            </div>
             {kandidat.length===0&&<p style={{fontSize:11,color:"#b45309",background:"#fff7e8",padding:8,borderRadius:9}}>Belum ada jadwal tujuan yang memiliki slot.</p>}
-            <p style={{fontSize:9.5,color:"#64748b",lineHeight:1.3,margin:"7px 0"}}>Group bisa pindah ke Group 3, 4, atau 6 orang. Private pindah ke Private. Tagihan lama dikosongkan agar dihitung ulang sesuai jadwal baru.</p>
+            <p style={{fontSize:8,color:"#64748b",lineHeight:1.2,margin:"5px 0"}}>Group bisa pindah ke Group 3, 4, atau 6 orang. Private pindah ke Private. Tagihan lama dikosongkan agar dihitung ulang sesuai jadwal baru.</p>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1.4fr",gap:7,marginTop:9}}>
-              <button type="button" onClick={()=>setMigrationMember(null)} style={{padding:10,borderRadius:10,border:"1px solid #abc",background:"#fff",fontWeight:800}}>Batal</button>
-              <button type="button" disabled={!migrationTargetId||migrationBusy} onClick={konfirmasiMigrasiMember} style={{padding:10,borderRadius:10,border:0,background:"#08799a",color:"#fff",fontWeight:900,opacity:(!migrationTargetId||migrationBusy)?.55:1}}>{migrationBusy?"Memindahkan...":"Konfirmasi Pindah"}</button>
+              <button type="button" onClick={()=>setMigrationMember(null)} style={{padding:7,borderRadius:8,border:"1px solid #abc",background:"#fff",fontWeight:800,fontSize:9}}>Batal</button>
+              <button type="button" disabled={!migrationTargetId||migrationBusy} onClick={konfirmasiMigrasiMember} style={{padding:7,borderRadius:8,border:0,background:"#08799a",color:"#fff",fontWeight:900,fontSize:9,opacity:(!migrationTargetId||migrationBusy)?.55:1}}>{migrationBusy?"Memindahkan...":"Konfirmasi Pindah"}</button>
             </div>
           </section>
         </div>;
