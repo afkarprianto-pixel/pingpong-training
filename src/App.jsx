@@ -1045,7 +1045,7 @@ const formattedSchedules = await Promise.all(
     }).select("id").single();
     if (error) {
       setPrivateRequestBusy(false);
-      alert("Pengajuan Private gagal dikirim: " + error.message);
+      alert("Pendaftaran Private gagal dikirim: " + error.message);
       return;
     }
     const { error:msgError } = await supabase.from("private_request_messages").insert({
@@ -1258,7 +1258,7 @@ const formattedSchedules = await Promise.all(
 
       form.trainingType === "Private"
 
-        ? "Menunggu Konfirmasi Pelatih"
+        ? "Terdaftar"
 
         : "Menunggu Peserta";
 
@@ -3211,6 +3211,31 @@ const formattedSchedules = await Promise.all(
         .price-back-btn{border:1px solid #cbdde5;background:#f5f9fb;color:#4c6674}
         .price-continue-btn{border:0;background:linear-gradient(145deg,#138ee4,#087a82);color:#fff}
 
+        /* PRIVATE = ALUR SAMA DENGAN GROUP */
+        .private-request-modern .private-request-head{
+          background:linear-gradient(145deg,#075c87,#087f82)!important;
+          color:#fff!important;
+          border-radius:16px!important;
+          padding:13px!important;
+        }
+        .private-request-modern .private-request-intro{
+          background:#eef8fc!important;
+          border:1px solid #cce6ef!important;
+          border-radius:12px!important;
+          padding:10px!important;
+          color:#365b6b!important;
+          line-height:1.4!important;
+        }
+        .private-request-modern .schedule-grid{
+          margin-top:10px!important;
+        }
+        .private-request-modern .schedule-card{
+          background:#fff!important;
+          border:1px solid #d6e7ee!important;
+          border-radius:15px!important;
+          box-shadow:0 6px 16px rgba(7,67,99,.08)!important;
+        }
+
       `}</style>
 
       {pricePopup && (() => {
@@ -3312,7 +3337,7 @@ const formattedSchedules = await Promise.all(
                     ["schedule","📅","Tambah Jadwal","Buat jadwal Group atau Private"],
                     ["cost","💰","Pengaturan Biaya Latihan","Atur biaya coach dan sewa meja"],
                     ["participants","👥","Daftar Peserta","Data member dan pembayaran"],
-                    ["private","💬","Pengajuan Private","Buka dan balas permintaan Private"],
+                    ["private","💬","Pendaftaran Private","Buka dan balas permintaan Private"],
                     ["news","📰","Kelola Berita Tenis Meja","Tambah, edit dan terbitkan berita"],
                     ["scheduleList","📋","Daftar Jadwal","Kelola jadwal yang sudah dibuat"],
                     ["visitors","👁","Statistik Kunjungan","Lihat jumlah kunjungan situs"]
@@ -3579,7 +3604,7 @@ const formattedSchedules = await Promise.all(
             {coachMenu==="private" && (<>
               <section style={{marginTop:16,background:"#fff",border:"1px solid #d7e3e8",borderRadius:12,padding:12}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:8,flexWrap:"wrap"}}>
-                  <h3 style={{margin:0}}>💬 Pengajuan Private</h3>
+                  <h3 style={{margin:0}}>💬 Pendaftaran Private</h3>
                   <button type="button" className="back-button" onClick={loadPrivateRequests}>Refresh</button>
                 </div>
                 <p style={{fontSize:12,color:"#64748b"}}>Percakapan ini hanya untuk calon member Private dan Coach, bukan Chat Publik.</p>
@@ -3589,7 +3614,7 @@ const formattedSchedules = await Promise.all(
                       <div style={{display:"flex",justifyContent:"space-between",gap:8,alignItems:"center"}}>
                         <strong>{r.name}</strong><span style={{fontSize:11,color:"#087b72",fontWeight:800}}>{r.status}</span>
                       </div>
-                      <div style={{fontSize:12,color:"#526b78",marginTop:4}}>{r.member_note || "Pengajuan Private"}</div>
+                      <div style={{fontSize:12,color:"#526b78",marginTop:4}}>{r.member_note || "Pendaftaran Private"}</div>
                       <div style={{display:"flex",gap:7,flexWrap:"wrap",marginTop:8}}>
                         <button type="button" className="back-button" onClick={async()=>{setPrivateThreadId(r.id);await loadPrivateThread(r.id);}}>Buka & Balas</button>
                         <button type="button" className="back-button" onClick={()=>coachSiapkanJadwalPrivate(r)}>Buat Jadwal Private</button>
@@ -4472,7 +4497,7 @@ const formattedSchedules = await Promise.all(
                 <div>
                   <small>PRIVATE TRAINING</small>
                   <h3>Latihan Private</h3>
-                  <p>Pilih fokus latihan dan jadwal Private yang sudah disediakan Coach.</p>
+                  <p>Pilih program latihan, lalu pilih hari dan jadwal Private yang sudah dibuat Coach.</p>
                 </div>
               </section>
             )}
@@ -5986,7 +6011,7 @@ const formattedSchedules = await Promise.all(
 
                   {form.trainingType === "Private"
 
-                    ? "Menunggu Konfirmasi Pelatih"
+                    ? "Terdaftar"
 
                     : selectedSchedule.registered >= 3
 
