@@ -31,6 +31,35 @@ const emptySchedule = { coach_rate: 300000, rental_rate_per_hour: 50000, day: "S
 
 
 
+// Renderer artikel aman: Markdown sederhana tanpa dangerouslySetInnerHTML.
+function NewsArticle({ content }) {
+  const inline = (value) => String(value || "").split(/(\*\*[^*]+\*\*|\[[^\]]+\]\(https?:\/\/[^)]+\))/g).map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**")) return <strong key={i}>{part.slice(2,-2)}</strong>;
+    const link = part.match(/^\[([^\]]+)\]\((https?:\/\/[^)]+)\)$/);
+    if (link) return <a key={i} href={link[2]} target="_blank" rel="noopener noreferrer">{link[1]}</a>;
+    return part;
+  });
+  const lines = String(content || "").replace(/\r/g, "").split("\n");
+  const nodes = [];
+  for (let i=0; i<lines.length; i++) {
+    const line=lines[i].trim();
+    if (!line) continue;
+    const image=line.match(/^!\[([^\]]*)\]\((https?:\/\/[^)]+)\)$/);
+    if (image) { nodes.push(<figure key={i} style={{margin:"18px 0"}}><img src={image[2]} alt={image[1]} loading="lazy" style={{width:"100%",maxHeight:500,objectFit:"contain",borderRadius:10}}/><figcaption style={{fontSize:12,color:"#64748b",textAlign:"center"}}>{image[1]}</figcaption></figure>); continue; }
+    if (/^\|.*\|$/.test(line) && i+1<lines.length && /^\|?[\s:|\-]+\|?$/.test(lines[i+1].trim())) {
+      const cells = row => row.trim().replace(/^\||\|$/g, "").split("|").map(c=>c.trim());
+      const headers=cells(line), rows=[]; i+=2;
+      while(i<lines.length && /^\|.*\|$/.test(lines[i].trim())) { rows.push(cells(lines[i])); i++; } i--;
+      nodes.push(<div key={i} style={{overflowX:"auto",margin:"16px 0"}}><table style={{borderCollapse:"collapse",width:"100%",fontSize:13,minWidth:400}}><thead><tr>{headers.map((h,j)=><th key={j} style={{background:"#e5f1f4",border:"1px solid #c9d9df",padding:9,textAlign:"left"}}>{inline(h)}</th>)}</tr></thead><tbody>{rows.map((r,j)=><tr key={j}>{headers.map((_,k)=><td key={k} style={{border:"1px solid #dbe5e9",padding:8}}>{inline(r[k]||"")}</td>)}</tr>)}</tbody></table></div>); continue;
+    }
+    const heading=line.match(/^(#{1,3})\s+(.+)$/);
+    if (heading) {const Tag=heading[1].length===1?"h2":heading[1].length===2?"h3":"h4";nodes.push(<Tag key={i} style={{color:"#073b55",margin:"20px 0 8px"}}>{inline(heading[2])}</Tag>);continue;}
+    if (/^[-*]\s+/.test(line)) {nodes.push(<div key={i} style={{paddingLeft:12,margin:"5px 0"}}>• {inline(line.replace(/^[-*]\s+/,""))}</div>);continue;}
+    nodes.push(<p key={i} style={{margin:"0 0 12px",overflowWrap:"anywhere"}}>{inline(line)}</p>);
+  }
+  return <div style={{fontSize:15,lineHeight:1.75,color:"#243b4a",textAlign:"left"}}>{nodes}</div>;
+}
+
 function App() {
 
   const [session, setSession] = useState(null);
@@ -610,19 +639,59 @@ function App() {
     if (scheduleForm.start_time >= scheduleForm.end_time) { alert("Jam selesai harus setelah jam mulai."); return; }
 
     const jamTerpilih = [1,2,3].includes(durasiJam(scheduleForm.start_time,scheduleForm.end_time)) ? durasiJam(scheduleForm.start_time,scheduleForm.end_time) : 2;
-    const payload = { ...scheduleForm, registration_closed: editId ? schedules.find(j=>j.id===editId)?.registrationClosed ?? false : false, end_time: selesaiDariDurasi(scheduleForm.start_time,jamTerpilih), coach_rate: Number(scheduleForm.coach_rate)||0, rental_rate_per_hour: Number(scheduleForm.rental_rate_per_hour)||0, quota: scheduleForm.type === "Private" ? 1 : Number(scheduleForm.quota || 4), min_participants: scheduleForm.type === "Private" ? 1 : Number(scheduleForm.quota || 4) };
+    const endTime = selesaiDariDurasi(scheduleForm.start_time,jamTerpilih);
 
     setSavingSchedule(true);
 
-    const request = editId ? supabase.from("schedule").update(payload).eq("id",editId) : supabase.from("schedule").insert(payload);
+    let error = null;
 
-    const { error } = await request;
+    if (editId) {
+      // Saat EDIT, hanya jadwal yang dipilih yang diubah.
+      const payload = {
+        ...scheduleForm,
+        registration_closed: schedules.find(j=>j.id===editId)?.registrationClosed ?? false,
+        end_time: endTime,
+        coach_rate: Number(scheduleForm.coach_rate)||0,
+        rental_rate_per_hour: Number(scheduleForm.rental_rate_per_hour)||0,
+        quota: scheduleForm.type === "Private" ? 1 : Number(scheduleForm.quota || 4),
+        min_participants: scheduleForm.type === "Private" ? 1 : Number(scheduleForm.quota || 4)
+      };
+      ({ error } = await supabase.from("schedule").update(payload).eq("id",editId));
+    } else {
+      // Saat TAMBAH jadwal, satu hari/jam otomatis dibuat menjadi:
+      // Group 3, Group 4, Group 6, dan Private.
+      const base = {
+        day: scheduleForm.day,
+        start_time: scheduleForm.start_time,
+        end_time: endTime,
+        coach: scheduleForm.coach || "Teguh Orina",
+        rental_rate_per_hour: Number(scheduleForm.rental_rate_per_hour)||0,
+        is_active: Boolean(scheduleForm.is_active),
+        registration_closed: false
+      };
+
+      const groupCoachRate = scheduleForm.type === "Group"
+        ? Number(scheduleForm.coach_rate || 300000)
+        : 300000;
+
+      const paketJadwal = [
+        { ...base, type:"Group", quota:3, min_participants:3, coach_rate:groupCoachRate },
+        { ...base, type:"Group", quota:4, min_participants:4, coach_rate:groupCoachRate },
+        { ...base, type:"Group", quota:6, min_participants:6, coach_rate:groupCoachRate },
+        { ...base, type:"Private", quota:1, min_participants:1, coach_rate:350000 }
+      ];
+
+      ({ error } = await supabase.from("schedule").insert(paketJadwal));
+    }
 
     setSavingSchedule(false);
 
     if (error) { alert("Gagal menyimpan jadwal: " + error.message); return; }
 
-    setEditId(null); setScheduleForm({...emptySchedule}); await loadSchedules(); alert("Jadwal berhasil disimpan.");
+    setEditId(null);
+    setScheduleForm({...emptySchedule});
+    await loadSchedules();
+    alert(editId ? "Jadwal berhasil diperbarui." : "Jadwal berhasil dibuat: Group 3, Group 4, Group 6, dan Private.");
 
   }
 
@@ -678,6 +747,7 @@ function App() {
   const [loadingNews, setLoadingNews] = useState(false);
   const [savingNews, setSavingNews] = useState(false);
   const [uploadingNewsImage, setUploadingNewsImage] = useState(false);
+  const [newsPreview, setNewsPreview] = useState(false);
   const [editNewsId, setEditNewsId] = useState(null);
   const [selectedNews, setSelectedNews] = useState(null);
   const [newsForm, setNewsForm] = useState({
@@ -885,6 +955,27 @@ const formattedSchedules = await Promise.all(
 
 
 
+    // Urutkan jadwal secara konsisten: Senin-Minggu, jam, lalu Group 3/4/6 dan Private.
+    const urutanHari = { Senin: 1, Selasa: 2, Rabu: 3, Kamis: 4, Jumat: 5, Sabtu: 6, Minggu: 7 };
+    const urutanKategori = (jadwal) => {
+      if (jadwal.type === "Private") return 99;
+      const q = Number(jadwal.quota || 0);
+      if (q === 3) return 3;
+      if (q === 4) return 4;
+      if (q === 6) return 6;
+      return 50 + q;
+    };
+
+    formattedSchedules.sort((a, b) => {
+      const bedaHari = (urutanHari[a.day] || 99) - (urutanHari[b.day] || 99);
+      if (bedaHari !== 0) return bedaHari;
+
+      const bedaJam = String(a.start_time || "").localeCompare(String(b.start_time || ""));
+      if (bedaJam !== 0) return bedaJam;
+
+      return urutanKategori(a) - urutanKategori(b);
+    });
+
     setSchedules(formattedSchedules);
 
     setIsLoadingSchedules(false);
@@ -917,7 +1008,7 @@ const formattedSchedules = await Promise.all(
     setNewsList(data || []);
   }
 
-  async function uploadNewsImage(file) {
+  async function uploadNewsImage(file, inlineImage=false) {
     if (!isPelatih || !file) return;
     if (!String(file.type || "").startsWith("image/")) {
       alert("File harus berupa foto/gambar.");
@@ -941,7 +1032,11 @@ const formattedSchedules = await Promise.all(
       return;
     }
     const { data } = supabase.storage.from("news-images").getPublicUrl(fileName);
-    setNewsForm(p=>({...p,image_url:data?.publicUrl || ""}));
+    if (inlineImage) {
+      setNewsForm(p=>({...p,content:p.content + (p.content ? "\n\n" : "") + `![Foto berita](${data?.publicUrl || ""})\n`}));
+    } else {
+      setNewsForm(p=>({...p,image_url:data?.publicUrl || ""}));
+    }
     setUploadingNewsImage(false);
   }
 
@@ -3525,14 +3620,19 @@ const formattedSchedules = await Promise.all(
                 </select>
                 <p style={{fontSize:13}}>Jam selesai otomatis: {selesaiDariDurasi(scheduleForm.start_time,[1,2,3].includes(durasiJam(scheduleForm.start_time,scheduleForm.end_time))?durasiJam(scheduleForm.start_time,scheduleForm.end_time):2)}</p>
               </div>
-              <div className="form-group"><label>Jenis Latihan</label><select value={scheduleForm.type} onChange={e=>setScheduleForm(p=>({...p,type:e.target.value,coach_rate:e.target.value==="Private"?350000:300000,quota:e.target.value==="Private"?1:4,min_participants:e.target.value==="Private"?1:4}))}><option value="Group">Group</option><option value="Private">Private (1 Orang)</option></select></div>
-              {scheduleForm.type==="Group" ? <div className="form-group">
-                <label>Kapasitas Group</label>
-                <select value={Number(scheduleForm.quota||4)} onChange={e=>setScheduleForm(p=>({...p,quota:Number(e.target.value),min_participants:Number(e.target.value)}))}>
-                  <option value={3}>Group 3 Orang</option><option value={4}>Group 4 Orang</option><option value={6}>Group 6 Orang</option>
-                </select>
-                <p style={{fontSize:12,color:"#64748b",margin:"5px 0 0"}}>Pilih kapasitas untuk jadwal ini.</p>
-              </div> : <p>Kapasitas: 1 orang (Private)</p>}
+              {editId ? <>
+                <div className="form-group"><label>Jenis Latihan</label><select value={scheduleForm.type} onChange={e=>setScheduleForm(p=>({...p,type:e.target.value,coach_rate:e.target.value==="Private"?350000:300000,quota:e.target.value==="Private"?1:4,min_participants:e.target.value==="Private"?1:4}))}><option value="Group">Group</option><option value="Private">Private (1 Orang)</option></select></div>
+                {scheduleForm.type==="Group" ? <div className="form-group">
+                  <label>Kapasitas Group</label>
+                  <select value={Number(scheduleForm.quota||4)} onChange={e=>setScheduleForm(p=>({...p,quota:Number(e.target.value),min_participants:Number(e.target.value)}))}>
+                    <option value={3}>Group 3 Orang</option><option value={4}>Group 4 Orang</option><option value={6}>Group 6 Orang</option>
+                  </select>
+                  <p style={{fontSize:12,color:"#64748b",margin:"5px 0 0"}}>Saat edit, perubahan hanya berlaku untuk jadwal ini.</p>
+                </div> : <p>Kapasitas: 1 orang (Private)</p>}
+              </> : <div style={{padding:10,border:"1px solid #9fc7d5",borderRadius:10,marginBottom:9,background:"#e9f4f8",fontSize:12,lineHeight:1.45,color:"#16485d"}}>
+                <strong>Otomatis dibuat 4 kategori untuk hari & jam yang sama:</strong><br/>
+                Group 3 Orang • Group 4 Orang • Group 6 Orang • Private 1 Orang
+              </div>}
 
               <div className="form-group"><label>Pelatih</label><input value={scheduleForm.coach} required onChange={e=>setScheduleForm(p=>({...p,coach:e.target.value}))}/></div>
 
@@ -3750,7 +3850,17 @@ const formattedSchedules = await Promise.all(
                       <div><button type="button" onClick={()=>setNewsForm(p=>({...p,image_url:""}))} style={{marginTop:5,border:"1px solid #e6a5a5",background:"#fff5f5",color:"#b42318",borderRadius:7,padding:"5px 9px",cursor:"pointer"}}>Hapus Foto dari Berita</button></div>
                     </div>}
                   </div>
-                  <div className="form-group"><label>Isi Berita</label><textarea value={newsForm.content} onChange={e=>setNewsForm(p=>({...p,content:e.target.value}))} rows="5" required style={{width:"100%",boxSizing:"border-box",padding:9,border:"1px solid #b7cbd3",borderRadius:8,resize:"vertical"}} /></div>
+                  <div className="form-group"><label>Isi Berita</label>
+                    <p style={{fontSize:12,color:"#607d8b"}}>Tempel artikel. Gunakan ## Subjudul, **tebal**, tabel Markdown, atau sisipkan foto di tengah artikel.</p>
+                    <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:8}}>
+                      <button type="button" onClick={()=>setNewsForm(p=>({...p,content:p.content+"\n\n## Subjudul\n"}))}>+ Subjudul</button>
+                      <button type="button" onClick={()=>setNewsForm(p=>({...p,content:p.content+"\n**Teks tebal**"}))}>+ Tebal</button>
+                      <label style={{display:"inline-block",padding:"7px 10px",background:"#fff",border:"1px solid #a5bec8",borderRadius:7,cursor:"pointer",fontSize:13}}>📷 Sisipkan Foto <input type="file" accept="image/*" style={{display:"none"}} disabled={uploadingNewsImage} onChange={e=>{const f=e.target.files?.[0];if(f)uploadNewsImage(f,true);e.target.value="";}}/></label>
+                      <button type="button" onClick={()=>setNewsPreview(v=>!v)}>{newsPreview?"✏️ Tutup Pratinjau":"👁 Pratinjau"}</button>
+                    </div>
+                    <textarea value={newsForm.content} onChange={e=>setNewsForm(p=>({...p,content:e.target.value}))} rows="12" required style={{width:"100%",boxSizing:"border-box",padding:10,border:"1px solid #b7cbd3",borderRadius:8,resize:"vertical",fontSize:14}} />
+                    {newsPreview && <div style={{background:"white",padding:14,border:"1px solid #b7cbd3",borderRadius:10,marginTop:10}}><h2>{newsForm.title||"Pratinjau Berita"}</h2>{newsForm.image_url&&<img src={newsForm.image_url} alt="Foto utama" style={{maxWidth:"100%",maxHeight:300}}/>}<NewsArticle content={newsForm.content}/></div>}
+                  </div>
                   <label style={{display:"flex",alignItems:"center",gap:7,fontSize:12,margin:"7px 0"}}><input type="checkbox" checked={newsForm.is_published} onChange={e=>setNewsForm(p=>({...p,is_published:e.target.checked}))}/> Tampilkan ke publik</label>
                   <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>
                     <button type="submit" className="register-submit" disabled={savingNews || uploadingNewsImage} style={{width:"auto"}}>{uploadingNewsImage ? "Upload Foto..." : savingNews ? "Menyimpan..." : editNewsId ? "Simpan Perubahan" : "Terbitkan Berita"}</button>
@@ -5057,7 +5167,7 @@ const formattedSchedules = await Promise.all(
                   <div style={{fontSize:10,fontWeight:900,color:"#087b72",marginTop:12}}>{selectedNews.category || "Berita Tenis Meja"}</div>
                   <h2 style={{color:"#073b55",margin:"5px 0 4px",lineHeight:1.2}}>{selectedNews.title}</h2>
                   <div style={{fontSize:10,color:"#78909c",marginBottom:13}}>{selectedNews.published_at ? new Date(selectedNews.published_at).toLocaleString("id-ID",{day:"2-digit",month:"long",year:"numeric",hour:"2-digit",minute:"2-digit"}) : ""}</div>
-                  <div style={{fontSize:14,color:"#243b4a",lineHeight:1.65,whiteSpace:"pre-wrap",textAlign:"left"}}>{selectedNews.content}</div>
+                  <NewsArticle content={selectedNews.content}/>
                 </div>
               </article>
             ) : loadingNews ? (
@@ -5071,7 +5181,7 @@ const formattedSchedules = await Promise.all(
                   <div style={{padding:12}}>
                     <div style={{fontSize:10,fontWeight:900,color:"#087b72"}}>{n.category || "Berita Tenis Meja"}</div>
                     <h3 style={{fontSize:15,margin:"4px 0",color:"#073b55",lineHeight:1.25}}>{n.title}</h3>
-                    <p style={{fontSize:11,color:"#64748b",margin:"5px 0",lineHeight:1.45}}>{String(n.content||"").slice(0,120)}{String(n.content||"").length>120?"...":""}</p>
+                    <p style={{fontSize:11,color:"#64748b",margin:"5px 0",lineHeight:1.45}}>{String(n.content||"").replace(/!\[[^\]]*\]\([^)]*\)/g, "").replace(/[#*|]/g, "").slice(0,120)}...</p>
                     <div style={{fontSize:10,fontWeight:800,color:"#087b72"}}>Baca selengkapnya →</div>
                   </div>
                 </article>)}
